@@ -1,0 +1,24 @@
+{
+  "name": "s01e01",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@langchain/openrouter": "^0.1.5",
+    "csv-parse": "^6.1.0",
+    "langchain": "^1.2.30",
+    "langchain-core": "^0.0.4",
+    "zos": "^2.4.3"
+  }
+}
