@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Cezary",
+    "surname": "Żurek",
+    "gender": "M",
+    "birthDate": "1987-08-07",
+    "birthPlace": "Grudziądz",
+    "birthCountry": "Polska",
+    "job": "Jest kluczowym specjalistą w dziedzinie przepływu towarów, odpowiedzialnym za optymalizację procesów. Zajmuje się zarządzaniem magazynami i transportem.",
+    "tags": [
+      "transport",
+      "praca fizyczna"
+    ],
+    "birthYear": 1987
+  },
+  {
+    "name": "Jacek",
+    "surname": "Nowak",
+    "gender": "M",
+    "birthDate": "1991-11-23",
+    "birthPlace": "Grudziądz",
+    "birthCountry": "Polska",
+    "job": "Kluczowy gracz w świecie, gdzie towary muszą docierać do celu szybko i sprawnie. Odpowiada za wybór najlepszych metod transportu, negocjacje z przewoźnikami i zarządzanie dokumentacją.",
+    "tags": [
+      "transport",
+      "praca z ludźmi"
+    ],
+    "birthYear": 1991
+  },
+  {
+    "name": "Oskar",
+    "surname": "Sieradzki",
+    "gender": "M",
+    "birthDate": "1993-12-18",
+    "birthPlace": "Grudziądz",
+    "birthCountry": "Polska",
+    "job": "Osoba ta jest odpowiedzialna za to, aby materiały trafiały tam, gdzie są potrzebne, w odpowiednim czasie i ilości. Analizuje potrzeby i projektuje najlepsze rozwiązania.",
+    "tags": [
+      "transport",
+      "praca z ludźmi"
+    ],
+    "birthYear": 1993
+  },
+  {
+    "name": "Wojciech",
+    "surname": "Bielik",
+    "gender": "M",
+    "birthDate": "1986-06-24",
+    "birthPlace": "Grudziądz",
+    "birthCountry": "Polska",
+    "job": "Zajmuje się kompleksowym zarządzaniem ruchem towarowym, od planowania po realizację. To on decyduje, gdzie trafiają poszczególne towary. Jego celem jest zapewnienie maksymalnej efektywności i minimalizacji kosztów.",
+    "tags": [
+      "transport",
+      "praca z ludźmi"
+    ],
+    "birthYear": 1986
+  },
+  {
+    "name": "Wacław",
+    "surname": "Jasiński",
+    "gender": "M",
+    "birthDate": "1986-03-01",
+    "birthPlace": "Grudziądz",
+    "birthCountry": "Polska",
+    "job": "Ta osoba jest mózgiem operacji związanych z przepływem towarów. Jej zadaniem jest zapewnienie, że wszystkie elementy systemu działają spójnie.",
+    "tags": [
+      "transport",
+      "praca z ludźmi"
+    ],
+    "birthYear": 1986
+  }
+]

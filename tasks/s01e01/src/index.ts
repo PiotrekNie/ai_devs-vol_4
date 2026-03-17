@@ -1,7 +1,7 @@
 import fetchPeople from "./fetchPeople";
 import filterPeople from "./filterPeople";
 import { tagJob } from "./jobTagging";
-import type { TaggedPerson, Tag } from "./types";
+import type { SuspectRecord, TaggedPerson, Tag } from "./types";
 
 const HUB_API_KEY = process.env.HUB_API_KEY;
 
@@ -46,6 +46,14 @@ async function init() {
 
     const transportOnly = taggedPeople.filter((p) => p.tags.includes("transport"));
     console.log("People with transport tag: ", transportOnly);
+
+    const suspectsForFindHim: SuspectRecord[] = transportOnly.map((person) => ({
+        ...person,
+        birthYear: new Date(person.birthDate).getFullYear(),
+    }));
+    const suspectsPath = new URL("../../data/suspects.json", import.meta.url);
+    await Bun.write(suspectsPath, `${JSON.stringify(suspectsForFindHim, null, 2)}\n`);
+    console.log(`Saved suspects for s01e02 to ${suspectsPath.pathname}`);
 
     const answer = transportOnly.map(toHubFormat);
 
