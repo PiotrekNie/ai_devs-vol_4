@@ -1,0 +1,9 @@
+# Environment files (repo root — applies to whole project)
+# Note: patterns in tasks/.gitignore only affect files under tasks/
+.env
+.env.*
+!.env.example
+!**/env.example
+
+# Dependencies — `!` means un-ignore; never use `!**/node_modules` or Git will track them
+node_modules/

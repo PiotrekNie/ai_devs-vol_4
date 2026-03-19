@@ -5,7 +5,7 @@
   "description": "Comprehensive MCP server demonstrating tools, prompts, resources, elicitation, and sampling",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node --env-file=../.env app.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
