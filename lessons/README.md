@@ -210,14 +210,43 @@ Install dependencies:
 npm run lesson9:install
 ```
 
-## Lesson 20
+## Lesson 10
 
 | Example | Run | Description |
 |---------|-----|-------------|
-| `05_01_agent_graph` | `npm run lesson20:agent_graph` | Multi-agent graph scheduler with task delegation, recovery, and a live dashboard |
+| `02_05_agent` | `npm run lesson10:agent` | Context engineering agent with observational memory (observer/reflector pattern) |
+| `02_05_sandbox` | `npm run lesson10:sandbox` | MCP sandbox agent with tool discovery and QuickJS code execution |
 
 Install dependencies:
 
 ```bash
-npm run lesson20:install
+npm run lesson10:install
 ```
+
+## Lesson 11
+
+| Example | Run | Description |
+|---------|-----|-------------|
+| `03_01_observability` | `npm run lesson11:observability` | Minimal agent server with Langfuse tracing at the adapter boundary |
+| `03_01_evals` | `npm run lesson11:evals` | Agent server with Langfuse tracing and synthetic tool-use evaluation suite |
+
+Install dependencies:
+
+```bash
+npm run lesson11:install
+```
+
+Both examples include a demo client — start the server first in a separate terminal:
+
+```bash
+npm run lesson11:observability          # terminal 1: start server
+npm run lesson11:observability:demo     # terminal 2: run demo session against the server
+
+npm run lesson11:evals                  # terminal 1: start server
+npm run lesson11:evals:demo             # terminal 2: run demo session against the server
+npm run lesson11:evals:tools            # standalone: synthetic tool-use eval (no server needed)
+npm run lesson11:evals:correctness      # standalone: response-correctness eval (no server needed)
+```
+
+Both examples require `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_BASE_URL` for tracing (optional — degrades gracefully when missing). These can be set in the root `.env` (shared) or in each project's local `.env` (takes priority).
+
