@@ -22,11 +22,8 @@ const VALID_OPENAI_SEARCH_CONTEXT_SIZES = new Set(["low", "medium", "high"]);
 const VALID_OPENROUTER_WEB_ENGINES = new Set(["native", "exa"]);
 const VALID_PROVIDERS = new Set(["openai", "openrouter"]);
 
-// Bun sets process.versions.node to a compatibility semver (often 22.x), not your installed Node.
-// Only enforce MIN_NODE_VERSION for real Node; Bun is handled separately.
-const isBun = typeof process.versions.bun === "string";
 const [major] = process.versions.node.split(".").map(Number);
-if (!isBun && major < MIN_NODE_VERSION) {
+if (major < MIN_NODE_VERSION) {
   console.error(`\x1b[31mError: Node.js ${MIN_NODE_VERSION}+ is required\x1b[0m`);
   console.error(`       Current version: ${process.versions.node}`);
   console.error("       Please upgrade: https://nodejs.org/");

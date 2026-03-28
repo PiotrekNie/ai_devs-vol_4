@@ -1,8 +1,7 @@
 {
   "allowed_recipients": [
     "adam@overment.com",
-    "piotr.niemirski@gmail.com",
-    "pniemirski@eversis.com"
+    "@yourdomain.com"
   ],
   "_comment": "Add email addresses or domain patterns (@domain.com) to allow sending"
 }
