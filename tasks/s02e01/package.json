@@ -1,0 +1,21 @@
+{
+  "name": "s02e01",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun --env-file=../.env run index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^2.0.0",
+    "ai": "^6.0.0",
+    "csv-parse": "^6.1.0",
+    "js-tiktoken": "^1.0.21"
+  }
+}
