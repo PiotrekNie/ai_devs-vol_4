@@ -73,7 +73,7 @@ export const ELECTRICITY_OPENROUTER_TOOLS: OpenAiFunctionTool[] = [
     function: {
       name: "read_board",
       description:
-        "Deterministic perception: B&W image, detect grid lines, cut 9 cells with 12px padding, then 9 separate vision calls (structured glyph: │─└┌┐┘├┬┤┴) → NESW masks. Preferred over read_board_state for stable tiles.",
+        "Deterministic perception: B&W image, detect grid lines, cut 9 cells with 12px padding, then 9 separate vision calls (per-edge JSON analysis → NESW mask). Optional extra tile inset via ELECTRICITY_TILE_VISION_INSET_FRAC. Preferred over read_board_state for stable tiles.",
       parameters: {
         type: "object",
         properties: {
@@ -127,7 +127,7 @@ export const ELECTRICITY_OPENROUTER_TOOLS: OpenAiFunctionTool[] = [
     function: {
       name: "split_image_to_grid",
       description:
-        "B&W → square crop (center or vision bbox) → grid line detection → 9 tiles with 12px padding → 9× glyph vision (same as read_board). Same mask format as read_board_state.",
+        "B&W → square crop (center or vision bbox) → grid line detection → 9 tiles with 12px padding → 9× per-tile edge vision (same as read_board). Same mask format as read_board_state.",
       parameters: {
         type: "object",
         properties: {

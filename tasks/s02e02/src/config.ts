@@ -62,6 +62,22 @@ export function electricityVisionConsensusRounds(): number {
 /** Inset from each cell edge when cutting tiles (avoids grid line artifacts). */
 export const TILE_PADDING_PX = 12;
 
+/**
+ * Optional extra per-tile crop (fraction of tile width/height per side) before per-tile vision.
+ * Set `ELECTRICITY_TILE_VISION_INSET_FRAC` e.g. `0.025`–`0.03` if neighbor wires bleed into crops.
+ */
+export function electricityTileVisionInsetFrac(): number {
+  const raw = process.env.ELECTRICITY_TILE_VISION_INSET_FRAC?.trim();
+  if (!raw) {
+    return 0;
+  }
+  const n = Number.parseFloat(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 0.45) {
+    return 0;
+  }
+  return n;
+}
+
 /** OpenRouter slug for the tool-calling agent (or `ELECTRICITY_AGENT_MODEL`). */
 export function electricityAgentModel(): string {
   return (
@@ -70,7 +86,7 @@ export function electricityAgentModel(): string {
   );
 }
 
-/** Vision model for reading board PNGs into 3×3 masks (per-tile glyph classification). */
+/** Vision model for board PNGs / per-tile edge analysis (structured JSON → NESW masks). */
 export function electricityVisionModel(): string {
   return (
     process.env.ELECTRICITY_VISION_MODEL?.trim()

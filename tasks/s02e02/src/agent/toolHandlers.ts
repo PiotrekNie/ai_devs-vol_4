@@ -10,16 +10,20 @@ import {
 import {
   detectBoardSquareViaVision,
   readBoardStateViaVision,
-  readMasksFromGlyphTiles,
+  readMasksFromVisionTiles,
 } from "../pipeline.ts";
 import {
   extractBoardSquare,
   pngBufferToDataUrl,
-  splitPngToTiles3x3,
   splitSquareToTilesWithGrid,
 } from "../splitImageGrid.ts";
 import { rotateMaskBy } from "../symbols.ts";
-import { boardPngUrl, hubApiKey, TILE_PADDING_PX } from "../config.ts";
+import {
+  boardPngUrl,
+  electricityTileVisionInsetFrac,
+  hubApiKey,
+  TILE_PADDING_PX,
+} from "../config.ts";
 import { readBoardConsensusFromUrl } from "../visionConsensus.ts";
 import { toGrayscaleBinaryPng, toGreyscaleRaw } from "../imagePreprocess.ts";
 import { detectGridLines, uniformGridLines } from "../gridDetect.ts";
@@ -98,8 +102,10 @@ async function masksFromPreprocessedPipeline(
   const lines = detectedLines ?? uniformGridLines(sw);
   const grid = detectedLines ? "detected" : "uniform";
 
-  const tiles = await splitSquareToTilesWithGrid(square, lines, TILE_PADDING_PX);
-  const masks = await readMasksFromGlyphTiles(tiles);
+  const tiles = await splitSquareToTilesWithGrid(square, lines, TILE_PADDING_PX, {
+    visionInsetFraction: electricityTileVisionInsetFrac(),
+  });
+  const masks = await readMasksFromVisionTiles(tiles);
 
   return {
     masks,

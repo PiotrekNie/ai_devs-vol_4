@@ -31,7 +31,7 @@ Live board PNG: ${boardUrl}
 
 Workflow (repeat until {FLG:...} or give up):
 1) fetch_board (optional reset) if needed.
-2) read_board — B/W, grid lines, 9 crops with 12px padding; each cell is classified via structured output into one box-drawing glyph, then converted to NESW masks (preferred).
+2) read_board — B/W, grid lines, 9 crops with 12px padding; each cell gets a per-edge vision pass (JSON: analysis + edges + mask) → NESW bitmask (preferred).
 3) solve_board with current=masks from step 2 and target=${t} (or omit target; it defaults to the context target). Deterministic rotation counts 0–3 per cell; no LLM.
 4) If solve_board.ok is false (topology_mismatch), do NOT call apply_rotations. Call reset_board and retry from step 2.
 5) If solve_board.ok is true, apply_rotations with the rotations matrix (0–3 per cell). Check for flag in the tool result.

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { electricityVisionModel } from "./config.ts";
-import { glyphCharToMask, TILE_GLYPH_CHARS, type TileGlyphChar } from "./glyphMap.ts";
 import { extractJsonObject } from "./jsonUtils.ts";
 import {
   assistantMessageToText,
@@ -9,10 +8,58 @@ import {
   type ChatCompletionMessageParam,
   type ChatContentPart,
 } from "./openrouter/chat.ts";
+import { EDGE_E, EDGE_N, EDGE_S, EDGE_W } from "./symbols.ts";
 import { type RectPixels, pngBufferToDataUrl } from "./splitImageGrid.ts";
 
 const VISION_MAX_TOKENS = 4096;
-const GLYPH_JSON_MAX_TOKENS = 256;
+const TILE_VISION_JSON_MAX_TOKENS = 512;
+
+const TILE_VISION_USER_TEXT = "Oto obraz pojedynczego kafelka.";
+
+const TILE_VISION_SYSTEM_PROMPT = `Jesteś precyzyjnym systemem wizyjnym. Otrzymujesz obraz pojedynczego, kwadratowego kafelka, na którym znajduje się fragment kabla/ścieżki. Twoim zadaniem jest określenie, z którymi krawędziami tego kafelka fizycznie styka się kabel.
+
+Każda krawędź ma przypisaną wartość liczbową:
+- GÓRA (Top) = 1
+- PRAWO (Right) = 2
+- DÓŁ (Bottom) = 4
+- LEWO (Left) = 8
+
+Wykonaj rygorystyczną analizę krok po kroku, sprawdzając punkt styku na każdej z 4 krawędzi kafelka. Zignoruj ewentualne szumy w tle – skup się wyłącznie na głównym, najgrubszym kształcie na środku obrazka.
+
+Zwróć odpowiedź w czystym formacie JSON bez znaczników markdown, używając poniższej struktury. Pod kluczem "mask" umieść SUMĘ wartości krawędzi, z którymi łączy się kabel.
+
+Przykłady obliczeń "mask":
+- Linia pozioma (lewo + prawo) = 8 + 2 = 10
+- Linia pionowa (góra + dół) = 1 + 4 = 5
+- Zakręt (np. dół + prawo) = 4 + 2 = 6
+- Trójnik (np. lewo + dół + prawo) = 8 + 4 + 2 = 14
+
+Oczekiwany format JSON:
+{
+  "analysis": "krótkie zdanie opisujące co widzisz",
+  "edges": {
+    "top": boolean,
+    "right": boolean,
+    "bottom": boolean,
+    "left": boolean
+  },
+  "mask": integer
+}`;
+
+const tileVisionEdgesSchema = z.object({
+  top: z.boolean(),
+  right: z.boolean(),
+  bottom: z.boolean(),
+  left: z.boolean(),
+});
+
+const tileVisionResponseSchema = z.object({
+  analysis: z.string().optional(),
+  edges: tileVisionEdgesSchema,
+  mask: z.number().int().min(0).max(15),
+});
+
+export type TileVisionEdges = z.infer<typeof tileVisionEdgesSchema>;
 
 const VISION_PROMPT = `You analyze a 3x3 electricity puzzle board image. Each tile connects to N, E, S, W edges.
 Encode each cell as a 4-bit mask: N=1, E=2, S=4, W=8 (add edges that have a wire/cable).
@@ -32,14 +79,41 @@ Rows: 0..2 top to bottom. Cols: 0..2 left to right.
 
 Reply with ONLY valid JSON (no markdown): {"masks":[[a,b,c],[d,e,f],[g,h,i]]} — nine integers 0-15.`;
 
-const TILE_GLYPH_PROMPT = `You see one cropped grayscale tile from a 3×3 electricity puzzle. Dark pixels are wires. North is the top of the image.
-Which single box-drawing character best matches the wire shape?
-You must pick exactly one symbol from this set and no other: ${TILE_GLYPH_CHARS.join(" ")}
-Reply with ONLY valid JSON (no markdown): {"symbol":"…"} where the value is exactly one character from the set.`;
+/** Map per-edge booleans to N=1,E=2,S=4,W=8 (top=north, …). */
+export function maskFromEdges(edges: TileVisionEdges): number {
+  let m = 0;
+  if (edges.top) {
+    m |= EDGE_N;
+  }
+  if (edges.right) {
+    m |= EDGE_E;
+  }
+  if (edges.bottom) {
+    m |= EDGE_S;
+  }
+  if (edges.left) {
+    m |= EDGE_W;
+  }
+  return m & 0xf;
+}
 
-const tileGlyphSchema = z.object({
-  symbol: z.enum(TILE_GLYPH_CHARS as unknown as [TileGlyphChar, ...TileGlyphChar[]]),
-});
+/**
+ * Canonical mask from per-edge booleans; `mask` in the response is ignored for the final value
+ * (model self-consistency) — edges win if they disagree.
+ */
+export function tileMaskFromVisionPayload(
+  data: z.infer<typeof tileVisionResponseSchema>,
+): number {
+  return maskFromEdges(data.edges);
+}
+
+function parseTileVisionJson(parsed: unknown): number {
+  const obj = tileVisionResponseSchema.safeParse(parsed);
+  if (!obj.success) {
+    throw new Error(`tile_vision_json_invalid: ${obj.error.message}`);
+  }
+  return tileMaskFromVisionPayload(obj.data);
+}
 
 function userMessageWithImage(prompt: string, imageSource: string): ChatCompletionMessageParam {
   const isHttp =
@@ -249,25 +323,26 @@ export async function readBoardStateViaVisionFromTiles(
 }
 
 /**
- * One tile PNG → one glyph via JSON response, then → 4-bit mask.
+ * One tile PNG → JSON with per-edge analysis → 4-bit mask (edges authoritative on conflict).
  */
-export async function readTileGlyphViaVision(tilePng: Buffer): Promise<number> {
+export async function readTileMaskViaVision(tilePng: Buffer): Promise<number> {
   const dataUrl = pngBufferToDataUrl(tilePng);
   const model = electricityVisionModel();
 
   const res = await postChatCompletion({
     model,
     messages: [
+      { role: "system", content: TILE_VISION_SYSTEM_PROMPT },
       {
         role: "user",
         content: [
-          { type: "text", text: TILE_GLYPH_PROMPT },
+          { type: "text", text: TILE_VISION_USER_TEXT },
           { type: "image_url", image_url: { url: dataUrl } },
         ],
       },
     ],
     temperature: 0,
-    max_tokens: GLYPH_JSON_MAX_TOKENS,
+    max_tokens: TILE_VISION_JSON_MAX_TOKENS,
     response_format: { type: "json_object" },
   });
 
@@ -278,21 +353,18 @@ export async function readTileGlyphViaVision(tilePng: Buffer): Promise<number> {
   } catch {
     parsed = extractJsonObject(text);
   }
-  const obj = tileGlyphSchema.safeParse(parsed);
-  if (!obj.success) {
-    throw new Error(`glyph_json_invalid: ${text.slice(0, 200)}`);
+  try {
+    return parseTileVisionJson(parsed);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`${msg}: ${text.slice(0, 200)}`);
   }
-  const mask = glyphCharToMask(obj.data.symbol);
-  if (mask === null) {
-    throw new Error(`glyph_to_mask_failed: ${JSON.stringify(obj.data.symbol)}`);
-  }
-  return mask & 0xf;
 }
 
 /**
  * Nine tile PNG buffers (row-major) → 9× vision calls → 3×3 mask grid.
  */
-export async function readMasksFromGlyphTiles(tileBuffers: Buffer[]): Promise<number[][]> {
+export async function readMasksFromVisionTiles(tileBuffers: Buffer[]): Promise<number[][]> {
   if (tileBuffers.length !== 9) {
     throw new Error("Expected exactly 9 tile buffers");
   }
@@ -301,7 +373,7 @@ export async function readMasksFromGlyphTiles(tileBuffers: Buffer[]): Promise<nu
   let i = 0;
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
-      const m = await readTileGlyphViaVision(tileBuffers[i]!);
+      const m = await readTileMaskViaVision(tileBuffers[i]!);
       masks[r]![c] = m;
       i++;
     }

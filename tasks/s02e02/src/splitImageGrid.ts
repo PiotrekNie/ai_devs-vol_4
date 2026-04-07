@@ -68,14 +68,41 @@ export async function extractBoardSquare(
     .toBuffer();
 }
 
+/** Shrink each side of the tile by `fraction` of width/height (reduces neighbor bleed for vision). */
+export async function applyFractionalTileInset(
+  tile: Buffer,
+  fraction: number,
+): Promise<Buffer> {
+  const f = Math.max(0, Math.min(0.45, fraction));
+  if (f <= 0) {
+    return tile;
+  }
+  const meta = await sharp(tile).metadata();
+  const w = meta.width ?? 0;
+  const h = meta.height ?? 0;
+  if (w < 1 || h < 1) {
+    return tile;
+  }
+  const mx = Math.round(w * f);
+  const my = Math.round(h * f);
+  const nw = Math.max(1, w - 2 * mx);
+  const nh = Math.max(1, h - 2 * my);
+  return sharp(tile)
+    .extract({ left: mx, top: my, width: nw, height: nh })
+    .png()
+    .toBuffer();
+}
+
 /**
  * Split square board into 9 tiles using grid line positions; inset each cell by `paddingPx`
  * from the cell rectangle to avoid grid line artifacts.
+ * Optional `visionInsetFraction` trims a further fraction from each side of every tile (neighbor noise).
  */
 export async function splitSquareToTilesWithGrid(
   square: Buffer,
   lines: GridLines,
   paddingPx: number,
+  opts?: { visionInsetFraction?: number },
 ): Promise<Buffer[]> {
   const meta = await sharp(square).metadata();
   const w = meta.width ?? 0;
@@ -84,6 +111,7 @@ export async function splitSquareToTilesWithGrid(
     throw new Error("Invalid square dimensions");
   }
 
+  const frac = opts?.visionInsetFraction ?? 0;
   const tiles: Buffer[] = [];
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
@@ -99,10 +127,13 @@ export async function splitSquareToTilesWithGrid(
       top = Math.max(0, Math.min(top, h - 1));
       width = Math.max(1, Math.min(width, w - left));
       height = Math.max(1, Math.min(height, h - top));
-      const buf = await sharp(square)
+      let buf = await sharp(square)
         .extract({ left, top, width, height })
         .png()
         .toBuffer();
+      if (frac > 0) {
+        buf = await applyFractionalTileInset(buf, frac);
+      }
       tiles.push(buf);
     }
   }
@@ -124,6 +155,8 @@ export interface SplitTilesOptions {
   paddingPx?: number;
   /** If omitted, equal thirds of the square side. */
   gridLines?: GridLines;
+  /** Extra inset per tile as a fraction of tile width/height (vision noise from neighbors). */
+  visionInsetFraction?: number;
 }
 
 /**
@@ -143,6 +176,7 @@ export async function splitPngToTiles3x3(
 
   const lines = opts?.gridLines ?? uniformGridLines(s);
   const pad = opts?.paddingPx ?? 0;
+  const visFrac = opts?.visionInsetFraction ?? 0;
   if (pad === 0 && !opts?.gridLines) {
     const [w0, w1, w2] = thirdSegmentLengths(s);
     const [h0, h1, h2] = thirdSegmentLengths(s);
@@ -155,17 +189,22 @@ export async function splitPngToTiles3x3(
         const top = rowTop[r]!;
         const width = c === 2 ? w2 : (c === 0 ? w0 : w1);
         const height = r === 2 ? h2 : (r === 0 ? h0 : h1);
-        const buf = await sharp(square)
+        let buf = await sharp(square)
           .extract({ left, top, width, height })
           .png()
           .toBuffer();
+        if (visFrac > 0) {
+          buf = await applyFractionalTileInset(buf, visFrac);
+        }
         tiles.push(buf);
       }
     }
     return tiles;
   }
 
-  return splitSquareToTilesWithGrid(square, lines, pad);
+  return splitSquareToTilesWithGrid(square, lines, pad, {
+    visionInsetFraction: visFrac,
+  });
 }
 
 export function pngBufferToDataUrl(buffer: Buffer): string {
