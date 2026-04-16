@@ -1,0 +1,159 @@
+/**
+ * Agent loop — processes queries using a unified set of tool handlers.
+ *
+ * The agent doesn't know whether a tool is served by MCP or native JS.
+ * It just dispatches to the handler map built by app.js. Each handler
+ * has { execute, label } so the output shows which backend ran the tool.
+ */
+
+import {
+  chat,
+  extractToolCalls,
+  extractText,
+  type FunctionToolCall,
+} from "./ai.js";
+import {
+  logQuery,
+  logToolCall,
+  logToolResult,
+  logToolError,
+  logToolCount,
+  logResponse,
+} from "./log.js";
+
+const MAX_TOOL_ROUNDS = 5;
+
+type ToolHandler = {
+  label: string;
+  execute: (args: Record<string, unknown>) => Promise<unknown>;
+};
+
+const executeToolCall = async (
+  call: FunctionToolCall,
+  handlers: Record<string, ToolHandler | undefined>,
+) => {
+  const args = JSON.parse(call.arguments) as Record<string, unknown>;
+  const handler = handlers[call.name];
+
+  if (!handler) {
+    throw new Error(`Unknown tool: ${call.name}`);
+  }
+
+  logToolCall(handler.label, call.name, args);
+
+  try {
+    const result = await handler.execute(args);
+    logToolResult(result);
+    return {
+      type: "function_call_output",
+      call_id: call.call_id,
+      output: JSON.stringify(result),
+    };
+  } catch (error) {
+    logToolError(error instanceof Error ? error.message : String(error));
+    return {
+      type: "function_call_output",
+      call_id: call.call_id,
+      output: JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    };
+  }
+};
+
+/**
+ * @param {object} config
+ * @param {string} config.model — model identifier
+ * @param {Array} config.tools — OpenAI-format tool definitions
+ * @param {string} config.instructions — system prompt
+ * @param {object} config.handlers — { toolName: { execute, label } }
+ */
+export const createAgent = ({
+  model,
+  tools,
+  instructions,
+  handlers,
+}: {
+  model: string;
+  tools?: unknown[];
+  instructions: string;
+  handlers: Record<string, ToolHandler | undefined>;
+}) => ({
+  async processQuery(query: string) {
+    logQuery(query);
+
+    const chatConfig = { model, tools, instructions };
+    let conversation: unknown[] = [{ role: "user", content: query }];
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const response = await chat({ ...chatConfig, input: conversation });
+      const toolCalls = extractToolCalls(response);
+
+      if (toolCalls.length === 0) {
+        const text = extractText(response) ?? "No response";
+        logResponse(text);
+        return text;
+      }
+
+      logToolCount(toolCalls.length);
+      const toolResults = await Promise.all(
+        toolCalls.map((call) => executeToolCall(call, handlers)),
+      );
+
+      conversation = [
+        ...conversation,
+        ...(response.output ?? []),
+        ...toolResults,
+      ];
+    }
+
+    logResponse("Max tool rounds reached");
+    return "Max tool rounds reached";
+  },
+
+  /**
+   * Multi-turn Hub proxy: persists Responses API `input` items per session.
+   * @param {unknown[]} previousInput — prior conversation items (empty on first message)
+   * @param {string} userMessage
+   * @returns {Promise<{ text: string, nextInput: unknown[] }>}
+   */
+  async processConversationTurn(previousInput: unknown, userMessage: string) {
+    logQuery(userMessage);
+
+    const chatConfig = { model, tools, instructions };
+    const prev = Array.isArray(previousInput) ? previousInput : [];
+    let conversation: unknown[] = [
+      ...prev,
+      { role: "user", content: userMessage },
+    ];
+
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const response = await chat({ ...chatConfig, input: conversation });
+      const toolCalls = extractToolCalls(response);
+
+      if (toolCalls.length === 0) {
+        const text = extractText(response) ?? "No response";
+        logResponse(text);
+        const nextInput = [...conversation, ...(response.output ?? [])];
+        return { text, nextInput };
+      }
+
+      logToolCount(toolCalls.length);
+      const toolResults = await Promise.all(
+        toolCalls.map((call) => executeToolCall(call, handlers)),
+      );
+
+      conversation = [
+        ...conversation,
+        ...(response.output ?? []),
+        ...toolResults,
+      ];
+    }
+
+    logResponse("Max tool rounds reached");
+    return {
+      text: "Max tool rounds reached",
+      nextInput: conversation,
+    };
+  },
+});
