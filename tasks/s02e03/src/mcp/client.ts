@@ -25,9 +25,26 @@ export const callMcpTool = async (client: Client, name: string, args: any) => {
   return result;
 };
 
+/** Concatenates MCP `content` text parts (tool result for the model). */
+export const mcpToolResultToText = (result: unknown): string => {
+  if (result && typeof result === "object" && "content" in result) {
+    const content = (result as { content?: Array<{ type?: string; text?: string }> })
+      .content;
+    if (Array.isArray(content)) {
+      return content
+        .filter((c) => c?.type === "text" && typeof c?.text === "string")
+        .map((c) => c!.text!)
+        .join("");
+    }
+  }
+  return typeof result === "string" ? result : JSON.stringify(result);
+};
+
 /**
  * OpenAI / Azure strict Responses API requires `additionalProperties: false`
- * on every object in the tool JSON Schema (MCP/Zod output omits it).
+ * on every object in the tool JSON Schema (MCP/Zod output omits it), and
+ * `required` must list every key in `properties` (Zod `.default()` otherwise
+ * omits keys from `required`, which breaks strict validation).
  */
 const ensureAdditionalPropertiesFalse = (
   schema: unknown,
@@ -51,6 +68,7 @@ const ensureAdditionalPropertiesFalse = (
         );
       }
       out.properties = props;
+      out.required = Object.keys(props);
     }
   }
   if (out.type === "array" && out.items) {

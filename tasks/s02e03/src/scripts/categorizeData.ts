@@ -2,14 +2,14 @@ import { z } from "zod";
 import { resolveModelForProvider } from "../../../config.js";
 import { chat, extractText } from "../ai.js";
 import { logScript } from "../log.js";
-import { minimizeMessage } from "./minimizeMessage.js";
 import { parseJsonObjectFromText } from "./parseModelJson.js";
 
 export const categorizeDataDescription = [
-  "Select which log lines are worthy of inclusion in the condensed log for Centrala: label power_plant only if the line materially supports failure-outage analysis (analiza awarii)—e.g. zasilanie, chłodzenie, pompy wodne, oprogramowanie, or other power-plant subsystems that clarify the incident chain.",
-  "Label non_power_plant for chatter, unrelated events, routine noise, generic IT, or lines that mention the site but do not help explain the outage.",
+  "Strict filter for Centrala condensed logs: label power_plant only for high-confidence causal lines—directly on the outage/root-cause path (trip/protection/interlock sequence, concrete loss of cooling/power/software control with a plant effect, named subsystem or component IDs tied to the incident).",
+  "Label non_power_plant for routine/heartbeat noise, generic IT, site name only, duplicate status without a new fact, peripheral monitoring that does not change the failure story, or WARN/CRIT without a clear plant mechanism. Severity alone is never enough.",
+  "When uncertain, choose non_power_plant (sparse inclusion).",
   "Each tool call sends one row; the model returns one label object; the tool merges labels with your rows in order.",
-  "For each line, reasoning is one or two sentences—keywords, subsystem, or why the line is not attach-worthy for the failure answer.",
+  "For each line, reasoning is one or two sentences—subsystem or why the line fails the causal-path test.",
 ].join(" ");
 
 /** Rows passed into categorization (from parseData / MCP callers). */
@@ -19,42 +19,33 @@ export const inputLogRowSchema = z.object({
   message: z.string(),
 });
 
-/** Model output: input fields plus category and reasoning. */
-export const logEntrySchema = inputLogRowSchema.extend({
-  category: z.enum(["power_plant", "non_power_plant"]),
-  reasoning: z.string(),
-  message: z.string(),
-});
-
 /** What the categorize LLM returns (no repeated message field). */
 const categorizeModelRowSchema = z.object({
   category: z.enum(["power_plant", "non_power_plant"]),
   reasoning: z.string(),
 });
 
-/** Full label row after merging model output with minimized message. */
-export const categorizeLabelRowSchema = categorizeModelRowSchema.extend({
-  message: z.string(),
-});
-
-/** Parsed model JSON: only labels, same order and length as input rows. */
-export const categorizeLabelsOutputSchema = z.object({
-  data: z.array(categorizeLabelRowSchema),
-});
-
 export const categorizeOutputSchema = z.object({
-  data: z.array(logEntrySchema),
+  data: z.array(categorizeModelRowSchema),
 });
 
-export type CategorizedLogRow = z.infer<typeof logEntrySchema>;
+export const categorizedLogRowSchema = inputLogRowSchema.extend({
+  category: z.enum(["power_plant", "non_power_plant"]),
+  reasoning: z.string(),
+});
+
+export type CategorizedLogRow = z.infer<typeof categorizedLogRowSchema>;
 export type CategorizeInputRow = z.infer<typeof inputLogRowSchema>;
-export type CategorizeLabelsOutput = z.infer<
-  typeof categorizeLabelsOutputSchema
->;
+export type CategorizeOutput = z.infer<typeof categorizeOutputSchema>;
+/** Full rows after merging LLM labels (date/status/message + category/reasoning). */
+export type CategorizedRowsOutput = { data: CategorizedLogRow[] };
 
 const categorizeInstructions = [
-  "You classify one log line at a time for failure-outage analysis. power_plant means the line is worth including in the condensed failure answer: events that help explain the outage—zasilanie, chłodzenie, pompy wodne, oprogramowanie, protection, trips, cooling, control software, or other subsystems relevant to the incident chain.",
-  "non_power_plant means exclude from that answer: plant-adjacent chatter, routine INFO with no analytic value, generic IT, unrelated noise, or anything that does not materially support analiza awarii even if it references the unit or site.",
+  "You classify one log line at a time for failure-outage analysis (analiza awarii). Be strict: the condensed log must stay small and high-signal.",
+  "power_plant: label ONLY if this line clearly belongs on the causal path of the outage—e.g. trip/protection/interlock sequence, SCRAM/trip initiation, concrete loss or impairment of zasilanie, chłodzenie, pompy wodne, sterowanie/oprogramowanie, or another plant mechanism with a stated effect; OR an explicit subsystem/component tag that directly advances root-cause reasoning. Ask: would removing this line change the failure narrative? If no → non_power_plant.",
+  "non_power_plant: routine or heartbeat OK, repeated status without new information, generic IT, chatter, unrelated events, peripheral monitoring that does not alter the incident story, mere mention of the site/unit, or plant-adjacent lines that do not state a mechanism tied to the failure chain.",
+  "Do not choose power_plant only because status is WARN or CRIT; severity alone is never sufficient.",
+  "When uncertain or the line is borderline, choose non_power_plant (default to exclusion).",
   "Return ONLY category and reasoning—do not repeat date, status, or message.",
   "Return ONLY a single JSON object (no markdown fences, no commentary) with exactly this shape:",
   '{"data":[{"category":"power_plant"|"non_power_plant","reasoning":"string"}]}',
@@ -69,8 +60,8 @@ const categorizeSingleLabelsOutputSchema = z.object({
 
 export function mergeCategorizeLabels(
   rows: CategorizeInputRow[],
-  labels: CategorizeLabelsOutput,
-): CategorizeOutput {
+  labels: CategorizeOutput,
+): CategorizedRowsOutput {
   if (rows.length !== labels.data.length) {
     throw new Error(
       `Categorize label count ${labels.data.length} does not match row count ${rows.length}`,
@@ -80,9 +71,7 @@ export function mergeCategorizeLabels(
     data: rows.map((row, i) => {
       const label = labels.data[i]!;
       return {
-        date: row.date,
-        status: row.status,
-        message: label.message,
+        ...row,
         category: label.category,
         reasoning: label.reasoning,
       };
@@ -94,15 +83,13 @@ function categorizeModel(): string {
   const raw =
     process.env.S02E03_CATEGORIZE_MODEL?.trim() ??
     process.env.OPENAI_MODEL?.trim() ??
-    "gpt-4o-mini";
+    "gpt-4o";
   return resolveModelForProvider(raw);
 }
 
-export type CategorizeOutput = z.infer<typeof categorizeOutputSchema>;
-
 async function runCategorizeOneRow(
   row: CategorizeInputRow,
-): Promise<z.infer<typeof categorizeLabelRowSchema>> {
+): Promise<z.infer<typeof categorizeModelRowSchema>> {
   const response = await chat({
     model: categorizeModel(),
     instructions: categorizeInstructions,
@@ -120,11 +107,6 @@ async function runCategorizeOneRow(
   if (!text) {
     throw new Error("Empty model response");
   }
-  const minimize_message = await minimizeMessage(row.message);
-
-  if (!minimize_message) {
-    throw new Error("Empty model response");
-  }
   const parsed = parseJsonObjectFromText(text);
   const out = categorizeSingleLabelsOutputSchema.safeParse(parsed);
 
@@ -136,23 +118,22 @@ async function runCategorizeOneRow(
 
   return {
     ...out.data.data[0],
-    message: minimize_message,
   };
 }
 
 /** Calls the model once per row; merges order is preserved. */
 export async function runCategorizePrompt(
   data: CategorizeInputRow[],
-): Promise<CategorizeLabelsOutput> {
-  const labels: z.infer<typeof categorizeLabelRowSchema>[] = [];
+): Promise<CategorizeOutput> {
+  const categories: z.infer<typeof categorizeModelRowSchema>[] = [];
   for (const row of data) {
     const categorizeOneRow = await runCategorizeOneRow(row);
-    labels.push(categorizeOneRow);
+    categories.push(categorizeOneRow);
     t = performance.now();
     logScript("runCategorizePrompt", {
       ms: Math.round(performance.now() - t),
-      label: categorizeOneRow,
+      category: categorizeOneRow,
     });
   }
-  return { data: labels };
+  return { data: categories };
 }

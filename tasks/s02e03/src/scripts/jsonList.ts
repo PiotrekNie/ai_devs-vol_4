@@ -1,20 +1,22 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { logEntrySchema } from "./categorizeData.js";
 import type { CategorizedData } from "../types/index.js";
-import type { CategorizedLogRow } from "../scripts/categorizeData.js";
+import {
+  categorizedLogRowSchema,
+  type CategorizedLogRow,
+} from "../scripts/categorizeData.js";
 
 /** On-disk JSON for pipeline cache: fingerprint of CRIT inputs + full categorized rows. */
 export const jsonListCacheSchema = z.object({
   inputFingerprint: z.string(),
-  data: z.array(logEntrySchema),
+  data: z.array(categorizedLogRowSchema),
 });
 
 /** Accepts cache-shaped files or MCP `{ items }` / partial `data`. */
 const jsonListLooseSchema = z.object({
   inputFingerprint: z.string().optional(),
-  data: z.array(logEntrySchema).optional(),
-  items: z.array(logEntrySchema).optional(),
+  data: z.array(categorizedLogRowSchema).optional(),
+  items: z.array(categorizedLogRowSchema).optional(),
 });
 
 export type JsonListCachePayload = z.infer<typeof jsonListCacheSchema>;
@@ -39,6 +41,8 @@ export const readJsonListFileDescription = [
   "Read a JSON list file at `path` (pipeline cache shape).",
   "Expects strict schema: `inputFingerprint` plus `data` (full categorized rows).",
   "Returns `data: null` when the file is missing or does not match this schema (e.g. loose `{ items }`-only files are not returned as structured cache).",
+  "Use `offset` + `limit` to page through large lists; response includes `total`, `offset`, `limit`, `has_more`.",
+  "Set `include_reasoning` false (default) to omit per-row reasoning text and save context.",
 ].join(" ");
 
 export const buildListToVerifyDescription = [

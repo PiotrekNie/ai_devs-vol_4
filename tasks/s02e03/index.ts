@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import {
-  type CategorizeOutput,
+  type CategorizedRowsOutput,
   mergeCategorizeLabels,
   runCategorizePrompt,
 } from "./src/scripts/categorizeData";
@@ -17,7 +17,8 @@ import {
   parseData,
   removeDuplicateLines,
 } from "./src/scripts/parseData";
-import type { CategorizedData } from "./src/types";
+import type { CategorizedData, DataItem } from "./src/types";
+import { runFailureTaskAgent } from "./src/failureTaskAgent";
 
 async function main() {
   let downloadDate: string | null = null;
@@ -44,7 +45,10 @@ async function main() {
 
       logScript("parse log lines");
       const parsedData = await parseData(raw);
-      const uniqueRows = removeDuplicateLines(parsedData);
+      const validRows = parsedData.filter(
+        (row): row is DataItem => row != null,
+      );
+      const uniqueRows = removeDuplicateLines(validRows);
       logScript("parse done", {
         ms: Math.round(performance.now() - t),
         lines: uniqueRows.length,
@@ -65,7 +69,7 @@ async function main() {
       );
       const cached = await readJsonListFile(jsonListPath);
 
-      let categorized: CategorizeOutput;
+      let categorized: CategorizedRowsOutput;
 
       if (cached && cached.inputFingerprint === inputFingerprint) {
         logScript("JsonList cache hit", {
@@ -73,9 +77,7 @@ async function main() {
           rows: rows.length,
         });
         categorized = {
-          data: cached.data.filter(
-            (r) => r.category === "power_plant",
-          ) as CategorizedData[],
+          data: cached.data as CategorizedData[],
         };
       } else {
         logScript("JsonList cache miss", {
@@ -104,9 +106,7 @@ async function main() {
 
         await writeJsonList(jsonListPath, {
           inputFingerprint,
-          data: categorized.data.filter(
-            (r) => r.category === "power_plant",
-          ) as CategorizedData[],
+          data: categorized.data as CategorizedData[],
         });
         logScript("JsonList cache written", { path: jsonListPath });
       }
@@ -135,6 +135,10 @@ async function main() {
       );
       await updateJsonList(jsonListPath, categorized.data);
       logScript("JsonList cache updated", { path: jsonListPath });
+
+      logScript("failure task agent start", { jsonListPath });
+      await runFailureTaskAgent({ jsonListPath });
+      logScript("failure task agent finished");
     } catch (error) {
       logScript("pipeline failed", {
         error: error instanceof Error ? error.message : String(error),

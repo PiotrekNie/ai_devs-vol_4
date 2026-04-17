@@ -10,8 +10,92 @@ import {
   EXTRA_API_HEADERS,
   RESPONSES_API_ENDPOINT,
 } from "../../config.js";
+import { logScript } from "./log.js";
 
 type OutputItem = { type?: string; content?: Array<{ type?: string; text?: string }> };
+
+const REASONING_EFFORTS = new Set([
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+]);
+
+/** Optional Responses API `reasoning` body. Set `S02E03_REASONING_EFFORT=off` to omit. Default effort `medium`. */
+export function resolveReasoningForRequest():
+  | Record<string, unknown>
+  | undefined {
+  const raw = process.env.S02E03_REASONING_EFFORT?.trim().toLowerCase();
+  if (raw === "" || raw === "off" || raw === "false" || raw === "0") {
+    return undefined;
+  }
+  const effort =
+    raw && REASONING_EFFORTS.has(raw)
+      ? raw
+      : "medium";
+  return { effort };
+}
+
+function stringifyReasoningItem(item: Record<string, unknown>): string {
+  if (typeof item.summary === "string") {
+    return item.summary;
+  }
+  if (Array.isArray(item.summary)) {
+    return item.summary.map((x) => String(x)).join(" ");
+  }
+  if (typeof item.text === "string") {
+    return item.text;
+  }
+  const content = item.content;
+  if (Array.isArray(content)) {
+    const parts = content
+      .map((c) =>
+        typeof c === "object" &&
+          c !== null &&
+          "text" in c &&
+          typeof (c as { text?: string }).text === "string"
+          ? (c as { text: string }).text
+          : "",
+      )
+      .filter(Boolean);
+    if (parts.length) {
+      return parts.join("\n");
+    }
+  }
+  try {
+    return JSON.stringify(item).slice(0, 2000);
+  } catch {
+    return "[reasoning]";
+  }
+}
+
+/** Logs reasoning / thought output items from a Responses API success payload (stderr). */
+export function logReasoningFromResponse(data: unknown): void {
+  if (typeof data !== "object" || data === null) {
+    return;
+  }
+  const output = (data as { output?: unknown[] }).output;
+  if (!Array.isArray(output)) {
+    return;
+  }
+  for (const item of output) {
+    if (typeof item !== "object" || item === null) {
+      continue;
+    }
+    const o = item as Record<string, unknown>;
+    const t = o.type;
+    if (t !== "reasoning" && t !== "thought") {
+      continue;
+    }
+    const summary = stringifyReasoningItem(o);
+    logScript("reasoning", {
+      type: String(t),
+      summary: summary.slice(0, 4000),
+    });
+  }
+}
 
 // The Responses API returns text in two possible locations
 const extractResponseText = (data: unknown): string => {
@@ -36,6 +120,8 @@ export type ChatParams = {
   tools?: unknown[];
   toolChoice?: "auto" | "none" | "required";
   instructions?: string;
+  /** OpenAI Responses API reasoning control (ignored by models that do not support it). */
+  reasoning?: Record<string, unknown>;
 };
 
 /** Successful Responses API JSON body (fields used by this client). */
@@ -49,6 +135,7 @@ export const chat = async ({
   tools,
   toolChoice,
   instructions,
+  reasoning,
 }: ChatParams) => {
   const body: Record<string, unknown> = { model, input };
   if (tools?.length) {
@@ -56,6 +143,9 @@ export const chat = async ({
     body.tool_choice = toolChoice;
   }
   if (instructions) body.instructions = instructions;
+  if (reasoning && Object.keys(reasoning).length > 0) {
+    body.reasoning = reasoning;
+  }
 
   const response = await fetch(RESPONSES_API_ENDPOINT, {
     method: "POST",
@@ -92,6 +182,8 @@ export const chat = async ({
     const full = errExtra ? `${errMsg} ${errExtra}` : errMsg;
     throw new Error(full);
   }
+
+  logReasoningFromResponse(data);
 
   return data as ResponsesApiSuccess;
 };
