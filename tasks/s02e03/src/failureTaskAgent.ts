@@ -3,6 +3,7 @@
  */
 
 import { createInterface } from "node:readline/promises";
+import path from "node:path";
 import { stdin as input, stderr as output } from "node:process";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { resolveModelForProvider } from "../../config.js";
@@ -37,6 +38,7 @@ const FAILURE_HUB_TASK_SPEC = [
   "- Read technician feedback in verify responses; add or rephrase lines, re-tokenize, and verify again until complete.",
 ].join("\n");
 
+/** Last-resort shrink if journal + active window still exceed char limits (Observational Memory handles token budget first). */
 function sealExecutionInputIfLarge(
   input: unknown[],
   meta: {
@@ -271,6 +273,20 @@ export async function runFailureTaskAgent(options: {
     "The human already approved your plan — execute it.",
   ].join("\n");
 
+  const omModel = resolveModelForProvider(
+    process.env.S02E03_OM_MODEL?.trim() ?? "gpt-4o-mini",
+  );
+  const observationJournalPath =
+    process.env.S02E03_OBSERVATION_LOG_PATH?.trim() ||
+    path.join(
+      path.dirname(options.jsonListPath),
+      "failure-observation-journal.txt",
+    );
+  logScript("failure task agent — observational journal", {
+    path: observationJournalPath,
+    omModel,
+  });
+
   const agent = createAgent({
     model,
     tools,
@@ -278,6 +294,11 @@ export async function runFailureTaskAgent(options: {
     handlers,
     maxToolRounds: EXECUTION_MAX_TOOL_ROUNDS,
     reasoning,
+    observationalMemory: {
+      journalPath: observationJournalPath,
+      omModel,
+      reasoning,
+    },
   });
 
   let previousInput: unknown[] = [];

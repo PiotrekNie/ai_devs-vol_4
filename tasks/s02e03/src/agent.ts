@@ -21,13 +21,22 @@ import {
   logToolCount,
   logResponse,
 } from "./log.js";
+import {
+  prepareObservationalMemory,
+  type ObservationalMemoryOptions,
+} from "./observationalMemory.js";
 
 const DEFAULT_MAX_TOOL_ROUNDS = 5;
 
 /** Cap tool JSON echoed back into chat history (characters, not tokens). */
 const MAX_FUNCTION_CALL_OUTPUT_CHARS = Math.max(
   8_000,
-  Number(process.env.S02E03_MAX_TOOL_OUTPUT_CHARS ?? 120_000),
+  Number(process.env.S02E03_MAX_TOOL_OUTPUT_CHARS ?? 24_000),
+);
+
+const DEFAULT_AGENT_MAX_OUTPUT_TOKENS = Math.max(
+  512,
+  Number(process.env.S02E03_AGENT_MAX_OUTPUT_TOKENS ?? 8192),
 );
 
 /**
@@ -114,6 +123,8 @@ export const createAgent = ({
   handlers,
   maxToolRounds = DEFAULT_MAX_TOOL_ROUNDS,
   reasoning,
+  observationalMemory,
+  maxOutputTokens = DEFAULT_AGENT_MAX_OUTPUT_TOKENS,
 }: {
   model: string;
   tools?: unknown[];
@@ -121,15 +132,34 @@ export const createAgent = ({
   handlers: Record<string, ToolHandler | undefined>;
   maxToolRounds?: number;
   reasoning?: ChatParams["reasoning"];
+  observationalMemory?: ObservationalMemoryOptions;
+  maxOutputTokens?: number;
 }) => ({
   async processQuery(query: string) {
     logQuery(query);
 
-    const chatConfig = { model, tools, instructions, reasoning };
     let conversation: unknown[] = [{ role: "user", content: query }];
 
     for (let round = 0; round < maxToolRounds; round++) {
-      const response = await chat({ ...chatConfig, input: conversation });
+      let effectiveInstructions = instructions;
+      if (observationalMemory) {
+        const prep = await prepareObservationalMemory({
+          conversation,
+          baseInstructions: instructions,
+          om: observationalMemory,
+        });
+        conversation = prep.conversation;
+        effectiveInstructions = prep.instructions;
+      }
+
+      const response = await chat({
+        model,
+        tools,
+        instructions: effectiveInstructions,
+        input: conversation,
+        reasoning,
+        maxOutputTokens,
+      });
       const toolCalls = extractToolCalls(response);
 
       if (toolCalls.length === 0) {
@@ -163,7 +193,6 @@ export const createAgent = ({
   async processConversationTurn(previousInput: unknown, userMessage: string) {
     logQuery(userMessage);
 
-    const chatConfig = { model, tools, instructions, reasoning };
     const prev = Array.isArray(previousInput) ? previousInput : [];
     let conversation: unknown[] = [
       ...prev,
@@ -171,7 +200,25 @@ export const createAgent = ({
     ];
 
     for (let round = 0; round < maxToolRounds; round++) {
-      const response = await chat({ ...chatConfig, input: conversation });
+      let effectiveInstructions = instructions;
+      if (observationalMemory) {
+        const prep = await prepareObservationalMemory({
+          conversation,
+          baseInstructions: instructions,
+          om: observationalMemory,
+        });
+        conversation = prep.conversation;
+        effectiveInstructions = prep.instructions;
+      }
+
+      const response = await chat({
+        model,
+        tools,
+        instructions: effectiveInstructions,
+        input: conversation,
+        reasoning,
+        maxOutputTokens,
+      });
       const toolCalls = extractToolCalls(response);
 
       if (toolCalls.length === 0) {

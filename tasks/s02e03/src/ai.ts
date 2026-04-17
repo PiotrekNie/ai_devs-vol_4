@@ -122,6 +122,8 @@ export type ChatParams = {
   instructions?: string;
   /** OpenAI Responses API reasoning control (ignored by models that do not support it). */
   reasoning?: Record<string, unknown>;
+  /** Caps completion reservation (frees context for input on 128k models). */
+  maxOutputTokens?: number;
 };
 
 /** Successful Responses API JSON body (fields used by this client). */
@@ -136,6 +138,7 @@ export const chat = async ({
   toolChoice,
   instructions,
   reasoning,
+  maxOutputTokens,
 }: ChatParams) => {
   const body: Record<string, unknown> = { model, input };
   if (tools?.length) {
@@ -145,6 +148,9 @@ export const chat = async ({
   if (instructions) body.instructions = instructions;
   if (reasoning && Object.keys(reasoning).length > 0) {
     body.reasoning = reasoning;
+  }
+  if (maxOutputTokens !== undefined && maxOutputTokens > 0) {
+    body.max_output_tokens = maxOutputTokens;
   }
 
   const response = await fetch(RESPONSES_API_ENDPOINT, {
