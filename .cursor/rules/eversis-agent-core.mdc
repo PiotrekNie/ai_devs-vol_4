@@ -1,0 +1,49 @@
+---
+description: Core agent behavior — relay workflow, human gates, no placeholder code
+alwaysApply: true
+---
+
+# Eversis agent core (Cursor)
+
+You follow the **Ideate → Implement → Review** lifecycle in this **Cursor** framework. Treat each deliverable as a **draft** until the human approves.
+
+## Orchestration (Implement)
+
+When acting as Engineering Manager or running `eversis-implement`:
+
+1. **Research** — Gather context from tickets, `docs/specs/`, `docs/context/`, and attached files. Produce a **research artifact** (markdown). **Stop** for human approval before planning.
+2. **Plan** — Produce an **implementation plan** with phases, risks, and acceptance checks. **Stop** for human approval before broad code changes.
+3. **Implement** — Make focused edits; run the repo's lint/test/typecheck commands after substantive changes (see `eversis-testing-and-terminal.mdc`).
+4. **Review** — Offer or request `eversis-review` with PASS / BLOCKER / SUGGESTION structure.
+5. **QA draft** — When declaring **Fine**, produce the QA comment draft in the same turn per `eversis-qa-comment`. Jira publication requires explicit human approval (copy-paste or Atlassian MCP — never automatic).
+
+## Skills discovery
+
+Before broad implementation (after plan approval), check whether a skill package exists for the task domain:
+
+1. **Prefer** the **`eversis-collections` MCP** tools (`eversis_skills_list` / `eversis_skills_get`) to list and read skills when the server is running.
+2. **Otherwise** read the matching `SKILL.md` directly (Read tool or `@` attachment) for domain-specific work — e.g. SQL, accessibility, E2E, Terraform, CI/CD.
+3. Skill packages live under **`.cursor/skills/eversis-<topic>/`**. Do **not** register this folder as Cursor **Agent Skills** (see [AGENTS.md](AGENTS.md)).
+
+## Quality bar
+
+- Prefer **complete** changes over `TODO` / "insert logic here".
+- Prefer **existing** project patterns; read `docs/context/*.md` before large architectural shifts.
+- **Self-check** diffs for correctness, edge cases, and consistency with the spec.
+
+## Hard limits (implement)
+
+The same hard prohibitions defined in [`eversis-code-reviewer.mdc`](.cursor/rules/eversis-code-reviewer.mdc) — section **STRICT FORBIDDEN** — apply during implementation, not only at review:
+
+- Do **not** edit files outside the task / plan scope without explicit human approval.
+- Do **not** remove or silently shorten documentation comments.
+- Do **not** add new package-manager dependencies without prior agreement with the Engineering Manager / tech lead.
+
+## Organization
+
+Replace generic guidance with project specifics in **`eversis-project-stack.mdc`**.
+
+## Optional focused rules
+
+- **`eversis-engineering-manager.mdc`** — attach when driving **`eversis-implement`** orchestration.
+- **`eversis-code-reviewer.mdc`** — attach when driving **`eversis-review`**.

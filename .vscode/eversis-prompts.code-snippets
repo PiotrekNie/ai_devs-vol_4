@@ -1,0 +1,22 @@
+{
+  "Eversis @eversis-implement": {
+    "prefix": "evimpl",
+    "body": ["@eversis-implement"],
+    "description": "Insert @ mention for the Implement prompt (use in Chat/Agent input)"
+  },
+  "Eversis @eversis-review": {
+    "prefix": "evrev",
+    "body": ["@eversis-review"],
+    "description": "Insert @ mention for the Review prompt"
+  },
+  "Eversis @eversis-analyze-materials": {
+    "prefix": "evanmat",
+    "body": ["@eversis-analyze-materials"],
+    "description": "Insert @ mention for workshop / ideation analysis prompt"
+  },
+  "Eversis @eversis-review-ui": {
+    "prefix": "evrevui",
+    "body": ["@eversis-review-ui"],
+    "description": "Insert @ mention for Figma vs implementation review prompt"
+  }
+}

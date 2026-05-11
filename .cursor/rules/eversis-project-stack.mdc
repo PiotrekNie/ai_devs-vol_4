@@ -1,0 +1,55 @@
+---
+description: Per-repository stack and quality commands — AI Devs 4 course tasks
+alwaysApply: true
+---
+
+# Project stack — AI Devs vol. 4
+
+This repository contains course tasks for **AI Devs 4** and is integrated with the **Cursor Collections** (Eversis) framework. The framework documentation lives in [documentation/cursor-collection.md](documentation/cursor-collection.md); the workflow entry point is [AGENTS.md](AGENTS.md).
+
+| Area | This repository |
+| ---- | --------------- |
+| **Product** | Educational AI agent tasks — one subfolder per episode (`tasks/sXXeYY/`) |
+| **Runtime** | **Bun** — use `bun` for all execution, testing, and package management. See the `use-bun-instead-of-node-vite-npm-pnpm` rule for the full list of Bun APIs to prefer. |
+| **Language** | TypeScript (ESNext, strict, bundler module resolution, `noEmit: true`) |
+| **Agent architecture** | ReAct loop, MCP-based tools, Observer/Reflector memory — see [tasks/docs/boilerplate-documentation.md](tasks/docs/boilerplate-documentation.md) |
+| **Shared code** | `tasks/shared/` — common types and utilities reused across tasks |
+| **Prompts** | `.cursor/prompts/public/` and `internal/` (`eversis-*.md`); attach with **`@eversis-*`** in Chat or Agent |
+| **Skills** | `.cursor/skills/eversis-*/` — list and read via `eversis-collections` MCP server (`eversis_skills_list`, `eversis_skills_get`) |
+
+## Task structure
+
+Each task lives in `tasks/sXXeYY/` and follows this layout:
+
+```text
+tasks/sXXeYY/
+├── index.ts          # Entrypoint (bootstrap)
+├── src/
+│   ├── agent/        # agent.ts, ai.ts, memory.ts
+│   ├── mcp/          # client.ts, server.ts
+│   ├── tools/        # native/ and mcp/
+│   ├── prompts/      # *.md system prompts
+│   └── types/        # index.ts (Zod schemas + interfaces)
+├── package.json
+└── tsconfig.json
+```
+
+New tasks must follow the architecture described in [tasks/docs/boilerplate-documentation.md](tasks/docs/boilerplate-documentation.md).
+
+## Quality commands
+
+Run from the task directory (`tasks/sXXeYY/`):
+
+- **Run task:** `bun --env-file=../.env run index.ts`
+- **Tests:** `bun test`
+- **Type-check:** `bunx tsc --noEmit` (or use Bun's built-in TS support)
+- **Install deps:** `bun install`
+
+## Conventions
+
+- Use `zod` for all schema definitions and tool input validation.
+- Store all long prompt strings in `src/prompts/*.md`; load with `fs.readFileSync`. Never hardcode multi-line prompts in TS files.
+- MCP tools must return `{ content: [{ type: "text", text: string }] }`.
+- Use the `logger.ts` pattern (`[MYŚL]`, `[AKCJA]`, `[WYNIK]`, `[SYSTEM]`) for agent loop output.
+- `MAX_ITERATIONS` guard is required in every agent loop.
+- Retry / exponential backoff is required for all HTTP calls to course APIs (HTTP 503 is expected).
