@@ -13,7 +13,8 @@ This repository contains course tasks for **AI Devs 4** and is integrated with t
 | **Runtime** | **Bun** — use `bun` for all execution, testing, and package management. See the `use-bun-instead-of-node-vite-npm-pnpm` rule for the full list of Bun APIs to prefer. |
 | **Language** | TypeScript (ESNext, strict, bundler module resolution, `noEmit: true`) |
 | **Agent architecture** | ReAct loop, MCP-based tools, Observer/Reflector memory — see [tasks/docs/boilerplate-documentation.md](tasks/docs/boilerplate-documentation.md) |
-| **Shared code** | `tasks/shared/` — common types and utilities reused across tasks |
+| **Agent runtime** | **`tasks/boilerplate/`** (`@ai-devs/agent-boilerplate`) — canonical agent runtime package: ReAct loop, AIAdapter (retry/backoff), MCP client/server, native tools, logger, memory scaffold. Consume via `"@ai-devs/agent-boilerplate": "file:../boilerplate"` in task `package.json`. See [tasks/boilerplate/README.md](tasks/boilerplate/README.md) and [tasks/docs/boilerplate-documentation.md](tasks/docs/boilerplate-documentation.md). |
+| **Shared code** | `tasks/shared/` — domain-specific helpers (e.g. `fetchPeople`, `filterPeople`); distinct from the agent runtime in `tasks/boilerplate/`. |
 | **Prompts** | `.cursor/prompts/public/` and `internal/` (`eversis-*.md`); attach with **`@eversis-*`** in Chat or Agent |
 | **Skills** | `.cursor/skills/eversis-*/` — list and read via `eversis-collections` MCP server (`eversis_skills_list`, `eversis_skills_get`) |
 
@@ -35,6 +36,14 @@ tasks/sXXeYY/
 ```
 
 New tasks must follow the architecture described in [tasks/docs/boilerplate-documentation.md](tasks/docs/boilerplate-documentation.md).
+
+### Boilerplate package quality commands
+
+Run from **`tasks/boilerplate/`** when editing the shared runtime:
+
+- **Tests:** `bun test`
+- **Type-check:** `bunx tsc --noEmit`
+- **Install deps:** `bun install`
 
 ## Quality commands
 
