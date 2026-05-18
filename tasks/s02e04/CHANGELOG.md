@@ -13,6 +13,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **`MemoryHooks` (faza E):** `createMailboxMemoryHooks` — journal `date` / `password` / `confirmation_code` z wyjść narzędzi + przycinanie środka konwersacji (`MAILBOX_MEMORY_*`).
 
+### Changed
+
+- **`http_request`:** `POST` wymaga `body`; żądanie na endpoint zmail dokleja `apikey` z `HUB_API_KEY` jak `postZmail`; doprecyzowane prompty i opis MCP (`help` przez `{"action":"help"}`).
+
 ---
 
 ## [0.1.0] — 2026-05-15

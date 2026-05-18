@@ -18,7 +18,7 @@ Przekaż **`task_name`: `mailbox`** oraz `answer` jako obiekt:
 
 ## Strategia (kolejność myślenia)
 
-1. **`help`** (`http_request` → zmail) — potwierdź akcje i parametry API.
+1. **`help`** (`http_request` → `POST` na URL zmail) — **`body`** musi zawierać JSON z **`action`** (np. `{ "action": "help" }`). Klucza `apikey` **nie** podajesz w argumencie — serwer MCP dokleja go z env. Najpierw ustal strukturę z odpowiedzi `help`, potem `getInbox` / `getThread` wg dokumentacji hubu.
 2. **Odkrycie:** `search_mail` z operatorami Gmail-like (`from:`, `subject:`, `OR`, `AND`, `"frazy"`). **Anchor:** Wiktor → `from:proton.me`; rozszerz zapytania gdy wynik pusty lub niekompletny.
 3. **Treść:** dla każdego kandydata wywołaj `download_mail_content` z `rowID` lub `messageID` (z listy / wątku).
 4. **Weryfikacja:** `submit_to_hub` — analizuj treść odpowiedzi hubu (braki / błędne pola). Poprawiaj kwerendy i czytaj kolejne maile.

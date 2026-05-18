@@ -51,7 +51,7 @@ Pełniejsza tabela (logger, retry, vision) — jak w szablonie boilerplate w [ta
 |-----------|------|
 | `search_mail` | `action: search` na zmail |
 | `download_mail_content` | `action: getMessages` — pełna treść |
-| `http_request` | m.in. `help`, `getInbox`, `getThread` (POST JSON na `ZMAIL_API_URL`) |
+| `http_request` | `help` / `getInbox` / `getThread`: `POST` z obowiązkowym `body` (np. `{"action":"help"}`); `apikey` na zmail dodawana z env — nie wpisuj w argumencie narzędzia |
 | `submit_to_hub` | `task_name: mailbox` |
 | `read_file`, `analyze_image_vision`, `finish_task` | jak w runtime |
 
