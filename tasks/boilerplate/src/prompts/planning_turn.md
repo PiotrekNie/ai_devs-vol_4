@@ -11,3 +11,5 @@ Use these headings in plain text:
 5. **Revision** — When you will update this plan (e.g. after tool errors or hub feedback).
 
 Do not call tools in this turn. Do not copy a full domain checklist from memory — infer steps from the user task and tool list.
+
+**URL discipline:** Do not guess API hosts. If the task instructions give an exact URL, use only that URL in the plan. If unsure of an endpoint, plan to use domain-specific tools (e.g. `search_mail`) instead of inventing `http_request` URLs.

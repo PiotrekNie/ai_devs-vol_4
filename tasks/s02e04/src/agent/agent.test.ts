@@ -172,6 +172,31 @@ describe("createAgent — processQuery", () => {
     expect(getCallCount()).toBe(3);
   });
 
+  it("with enablePlanningPhase false skips plan turn (one fewer LLM call)", async () => {
+    const { adapter, getCallCount } = countAdapterCalls([
+      toolCallResponse("no_op", {}),
+      textResponse("done"),
+    ]);
+
+    const agent = createAgent({
+      ai: adapter,
+      instructions: "Test.",
+      tools: [],
+      handlers: {
+        no_op: {
+          label: "[Test]",
+          execute: async () => ({ ok: true }),
+        },
+      },
+      enablePlanningPhase: false,
+      maxIterations: 2,
+    });
+
+    const result = await agent.processQuery("Go.");
+    expect(result).toBe("done");
+    expect(getCallCount()).toBe(2);
+  });
+
   it("handles an unknown tool gracefully (returns error result, continues)", async () => {
     const agent = createAgent({
       ai: makeAdapter([

@@ -36,13 +36,16 @@ export const AGENT_VISION_MODEL =
   process.env['AGENT_VISION_MODEL']?.trim() ?? 'gpt-4o-mini';
 
 /** Maximum ReAct loop iterations before the agent gives up. */
-export const MAX_ITERATIONS = posInt('AGENT_MAX_ITERATIONS', 50);
+export const MAX_ITERATIONS = posInt('AGENT_MAX_ITERATIONS', 500);
 
 /** Max output tokens for planning turn 0 (outside MAX_ITERATIONS). */
 export const PLANNING_MAX_OUTPUT_TOKENS = posInt(
   'AGENT_PLANNING_MAX_OUTPUT_TOKENS',
   1024,
 );
+
+/** Max tokens per ReAct LLM turn (avoids truncated thoughts before tool calls). */
+export const AGENT_MAX_OUTPUT_TOKENS = posInt('AGENT_MAX_OUTPUT_TOKENS', 4096);
 
 /**
  * Maximum characters echoed back per tool result.

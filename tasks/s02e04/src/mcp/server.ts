@@ -45,9 +45,10 @@ export function createS02e04McpServer(): McpServer {
     'http_request',
     {
       description:
-        'Make an HTTP GET or POST request. Retries automatically on 429 and 503 ' +
-        '(exponential backoff). Returns { ok, status, data }. ' +
-        'Use for zmail `help`, `getInbox`, `getThread` — POST JSON to ZMAIL_API_URL.',
+        'Make an HTTP GET or POST request. Retries automatically on 429 and 503. ' +
+        'For mailbox prefer search_mail / download_mail_content. ' +
+        'Zmail help/inbox/thread only via POST to https://hub.ag3nts.org/api/zmail with JSON body (apikey injected). ' +
+        'Wrong hosts (e.g. zmail.com) are rejected.',
       inputSchema: httpRequestInputSchema,
     },
     executeHttpRequest,
@@ -57,9 +58,8 @@ export function createS02e04McpServer(): McpServer {
     'search_mail',
     {
       description:
-        'Search mailbox messages (zmail action: search). Gmail-like operators: ' +
-        'from:, to:, subject:, OR, AND, phrases in quotes. Returns metadata only — ' +
-        'then call download_mail_content for bodies.',
+        'Search mailbox (metadata only). Each item has messageID (32-char hex) — ' +
+        'always pass that ID to download_mail_content, never numeric rowID.',
       inputSchema: searchMailInputSchema,
     },
     executeSearchMail,
@@ -69,8 +69,8 @@ export function createS02e04McpServer(): McpServer {
     'download_mail_content',
     {
       description:
-        'Fetch full message body/bodies from zmail (action: getMessages). Pass rowID, ' +
-        'messageID string, or array. Always use this before inferring facts from an email.',
+        'Fetch full message bodies (getMessages). ids must be messageID string(s) ' +
+        'from search_mail items (32 hex chars). rowID is rejected. Read body before extracting facts.',
       inputSchema: downloadMailContentInputSchema,
     },
     executeDownloadMailContent,
@@ -82,7 +82,8 @@ export function createS02e04McpServer(): McpServer {
       description:
         'Submit an answer to the AI Devs course verification hub. ' +
         'Requires HUB_API_KEY. Returns { ok, status, data, flag? }. ' +
-        'For mailbox use task_name: mailbox and answer: { password, date, confirmation_code }.',
+        'mailbox: answer merges date (attack mail), password (reset mail), confirmation_code ' +
+        '(36 chars, newest SEC correction). Rejects invalid code length before HTTP.',
       inputSchema: submitToHubInputSchema,
     },
     executeSubmitToHub,

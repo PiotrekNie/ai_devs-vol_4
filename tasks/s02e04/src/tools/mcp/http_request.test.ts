@@ -1,6 +1,7 @@
 import { describe, it, expect, mock, afterEach } from 'bun:test';
 import {
   executeHttpRequest,
+  isZmailApiBody,
   isZmailEndpoint,
 } from './http_request.js';
 
@@ -16,10 +17,37 @@ describe('isZmailEndpoint', () => {
   });
 });
 
+describe('isZmailApiBody', () => {
+  it('detects zmail action fields', () => {
+    expect(isZmailApiBody({ action: 'help' })).toBe(true);
+    expect(isZmailApiBody({ action: 'search' })).toBe(true);
+    expect(isZmailApiBody({ action: 'other' })).toBe(false);
+    expect(isZmailApiBody(undefined)).toBe(false);
+  });
+});
+
 describe('executeHttpRequest', () => {
   afterEach(() => {
     globalThis.fetch = global.fetch;
     delete process.env.HUB_API_KEY;
+  });
+
+  it('rejects zmail-like POST on wrong host without calling fetch', async () => {
+    let fetchCalled = false;
+    globalThis.fetch = mock(async () => {
+      fetchCalled = true;
+      return new Response('{}', { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const out = await executeHttpRequest({
+      url: 'https://zmail.com/api',
+      method: 'POST',
+      body: { action: 'help' },
+    });
+
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain('hub.ag3nts.org/api/zmail');
+    expect(fetchCalled).toBe(false);
   });
 
   it('rejects POST without body', async () => {

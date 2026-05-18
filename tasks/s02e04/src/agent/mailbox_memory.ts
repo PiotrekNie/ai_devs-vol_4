@@ -16,6 +16,10 @@ import {
   MAILBOX_MEMORY_KEEP_TAIL_ITEMS,
   MAILBOX_MEMORY_TRIM_TOKEN_EST,
 } from "../../config.js";
+import {
+  isMailboxConfirmationCode,
+  MAILBOX_CONFIRMATION_CODE_LENGTH,
+} from "../tools/mcp/mailbox_answer.js";
 
 const JOURNAL_MARKER = "\n\n---\n## Mailbox working memory";
 
@@ -38,9 +42,34 @@ function stripPreviousJournal(instructions: string): string {
   return instructions.slice(0, i).trimEnd();
 }
 
-function confirmationPattern(s: string): string | undefined {
-  const m = s.match(/SEC-.{32}/);
-  return m ? m[0] : undefined;
+/** Prefer full 36-char codes; among those, last match in text (correction mails). */
+export function bestSecCodeFromText(s: string): string | undefined {
+  const found: string[] = [];
+  for (const m of s.matchAll(/SEC-[a-f0-9]+/gi)) {
+    found.push(m[0]);
+  }
+  if (found.length === 0) return undefined;
+
+  const exact = found.filter((c) => isMailboxConfirmationCode(c));
+  if (exact.length > 0) return exact[exact.length - 1];
+
+  return [...found].sort((a, b) => b.length - a.length)[0];
+}
+
+export function mergeConfirmationCode(
+  existing: string | undefined,
+  candidate: string | undefined,
+): string | undefined {
+  if (!candidate) return existing;
+  if (!existing) return candidate;
+
+  const existingFull = isMailboxConfirmationCode(existing);
+  const candidateFull = isMailboxConfirmationCode(candidate);
+  if (candidateFull && !existingFull) return candidate;
+  if (existingFull && !candidateFull) return existing;
+  if (candidateFull && existingFull) return candidate;
+
+  return candidate.length > existing.length ? candidate : existing;
 }
 
 function isoDatePattern(s: string): string | undefined {
@@ -53,8 +82,13 @@ function visitFactsNode(node: unknown, depth: number, facts: MailboxFacts): void
   if (depth > 24 || node == null) return;
 
   if (typeof node === "string") {
-    const sec = confirmationPattern(node);
-    if (sec) facts.confirmation_code = sec;
+    const sec = bestSecCodeFromText(node);
+    if (sec) {
+      facts.confirmation_code = mergeConfirmationCode(
+        facts.confirmation_code,
+        sec,
+      );
+    }
     const d = isoDatePattern(node);
     if (d) facts.date = d;
     return;
@@ -76,8 +110,13 @@ function visitFactsNode(node: unknown, depth: number, facts: MailboxFacts): void
     facts.password = n.password;
   }
   if (typeof n.confirmation_code === "string") {
-    const sec = confirmationPattern(n.confirmation_code);
-    if (sec) facts.confirmation_code = sec;
+    const sec = bestSecCodeFromText(n.confirmation_code);
+    if (sec) {
+      facts.confirmation_code = mergeConfirmationCode(
+        facts.confirmation_code,
+        sec,
+      );
+    }
   }
 
   for (const k of Object.keys(n)) {
@@ -137,7 +176,12 @@ function formatJournal(facts: MailboxFacts, trimNote: string | null): string {
     "Extracted so far from tool results (may be incomplete; verify with tools):",
     `- **date:** ${facts.date ?? "(unknown)"}`,
     `- **password:** ${facts.password ?? "(unknown)"}`,
-    `- **confirmation_code:** ${facts.confirmation_code ?? "(unknown)"}`,
+    `- **confirmation_code:** ${facts.confirmation_code ?? "(unknown)"}${
+      facts.confirmation_code &&
+      facts.confirmation_code.length !== MAILBOX_CONFIRMATION_CODE_LENGTH
+        ? " (INCOMPLETE — find newer SEC-thread correction mail)"
+        : ""
+    }`,
   ];
   if (trimNote) {
     lines.push("", `Context note: ${trimNote}`);

@@ -12,6 +12,7 @@ import { fetchWithRetry } from "../../agent/ai.js";
 import { HUB_VERIFY_URL, HUB_API_KEY } from "../../../config.js";
 import { mcpOk, mcpErr } from "../../types/index.js";
 import type { McpToolResponse } from "../../types/index.js";
+import { validateMailboxHubAnswer } from "./mailbox_answer.js";
 
 const FLAG_PATTERN = /\{FLG:[^}]+\}/;
 
@@ -37,8 +38,9 @@ export const submitToHubInputSchema = z.object({
       hubAnswerLeaf,
     ])
     .describe(
-      "Payload for the hub `answer` field. For `mailbox` use an object with " +
-        "password, date (YYYY-MM-DD), confirmation_code (SEC-…).",
+      "Hub answer. mailbox: merge three sources — date from attack-plan security mail body, " +
+        "password from password-reset mail, confirmation_code (36 chars) from newest SEC-thread " +
+        "correction mail. Tool rejects wrong-length codes before calling the hub.",
     ),
 });
 export type SubmitToHubInput = z.infer<typeof submitToHubInputSchema>;
@@ -55,6 +57,13 @@ export async function executeSubmitToHub(
     return mcpErr(
       "HUB_API_KEY is not set. Add it to tasks/.env to use submit_to_hub.",
     );
+  }
+
+  if (args.task_name === "mailbox") {
+    const validationError = validateMailboxHubAnswer(args.answer);
+    if (validationError) {
+      return mcpErr(validationError);
+    }
   }
 
   const payload = {

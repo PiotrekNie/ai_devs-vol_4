@@ -37,7 +37,9 @@ bun run start
 | `ZMAIL_API_URL` | `https://hub.ag3nts.org/api/zmail` | Endpoint skrzynki |
 | `HUB_VERIFY_URL` | `https://hub.ag3nts.org/verify` | Weryfikacja odpowiedzi |
 | `AGENT_MODEL` | `gpt-4o-mini` | Model rozumowania (np. tańszy flash wg materiałów kursu) |
-| `AGENT_MAX_ITERATIONS` | `10` | Limit pętli ReAct |
+| `AGENT_MAX_ITERATIONS` | `50` | Limit pętli ReAct |
+| `AGENT_MAX_OUTPUT_TOKENS` | `4096` | Limit tokenów na turę LLM (mniej uciętych odpowiedzi przed tool call) |
+| `AGENT_PLANNING_MAX_OUTPUT_TOKENS` | `1024` | Limit tury 0 (`enablePlanningPhase`) |
 | `MAILBOX_MEMORY_TRIM_TOKEN_EST` | `14000` | Szacunek tokenów (~znaki/4); powyżej — skrócenie historii (pierwsza wiadomość + ogon) |
 | `MAILBOX_MEMORY_KEEP_TAIL_ITEMS` | `28` | Liczba ostatnich elementów konwersacji zachowanych przy skróceniu |
 

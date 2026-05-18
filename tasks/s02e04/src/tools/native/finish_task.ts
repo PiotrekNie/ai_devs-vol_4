@@ -32,7 +32,8 @@ export const finishTaskTool = {
   name: "finish_task" as const,
   description:
     "End the agent's work and return the final answer. " +
-    "Call this when you have found the complete solution to the task. " +
+    "For mailbox: call only after submit_to_hub returned a {FLG:...} flag in the tool result. " +
+    "Do not call after hub errors (-960, -970) without another successful submit. " +
     "Do not call any other tools after this.",
   inputSchema: finishTaskInputSchema,
   /** Throws FinishTaskSignal — caught by createAgent, not the caller. */

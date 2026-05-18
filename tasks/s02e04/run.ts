@@ -5,7 +5,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { DEFAULT_AGENT_MODEL } from "./config.js";
+import { AGENT_MAX_OUTPUT_TOKENS, DEFAULT_AGENT_MODEL } from "./config.js";
 import { createAgent } from "./src/agent/agent.js";
 import { createAIAdapter } from "./src/agent/ai.js";
 import { createMailboxMemoryHooks } from "./src/agent/mailbox_memory.js";
@@ -34,9 +34,18 @@ const mailboxTaskSpec = readFileSync(
   "utf8",
 );
 
-const instructions = [systemPrompt.trimEnd(), mailboxTaskSpec.trimEnd(), ""].join(
-  "\n\n",
-);
+const instructions = [
+  systemPrompt.trimEnd(),
+  mailboxTaskSpec.trimEnd(),
+  "",
+].join("\n\n");
+
+/** Turn-0 planning LLM call (tool_choice: none). Must match user query below. */
+const enablePlanningPhase = true;
+
+const mailboxUserQuery = enablePlanningPhase
+  ? "Rozpocznij zadanie mailbox. Tura 0: plan z Ograniczeniami domenowymi. Po search_mail zawsze download_mail_content po messageID (32 znaki), nigdy rowID. submit_to_hub aż do {FLG:...}. Krótkie myśli — priorytet narzędzia."
+  : "Rozpocznij zadanie mailbox. Od razu używaj narzędzi (search → download po messageID). Złóż answer z trzech maili (data ataku, hasło, kod SEC 36 znaków z korekty). submit_to_hub aż do {FLG:...} — bez finish_task wcześniej. Krótkie myśli — priorytet narzędzia.";
 
 async function main() {
   const mcpServer = createS02e04McpServer();
@@ -67,17 +76,18 @@ async function main() {
   };
 
   const agent = createAgent({
-    ai: createAIAdapter({ model: DEFAULT_AGENT_MODEL }),
+    ai: createAIAdapter({
+      model: DEFAULT_AGENT_MODEL,
+      maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
+    }),
     instructions,
     tools: allTools,
     handlers,
     memory: createMailboxMemoryHooks(),
-    enablePlanningPhase: true,
+    enablePlanningPhase,
   });
 
-  const result = await agent.processQuery(
-    "Rozpocznij wykonanie zadania mailbox. Przy budowie planu (tura 0) uwzględnij sekcję Ograniczenia domenowe w instrukcji. Działaj do flagi lub jawnego braku postępu.",
-  );
+  const result = await agent.processQuery(mailboxUserQuery);
   console.log(result);
 }
 

@@ -11,14 +11,19 @@ import { ZMAIL_API_URL } from '../../../config.js';
 import { mcpOk, mcpErr } from '../../types/index.js';
 import type { McpToolResponse } from '../../types/index.js';
 
+const ZMAIL_API_ACTIONS = new Set([
+  'help',
+  'getInbox',
+  'getThread',
+  'search',
+  'getMessages',
+]);
+
 /** Same-origin + pathname match — ignores trailing slashes and stray querystrings on the request URL. */
 export function isZmailEndpoint(requestUrl: string): boolean {
   try {
     const u = new URL(requestUrl.trim());
     const base = new URL(ZMAIL_API_URL.trim());
-    console.log(
-      `Checking if URL ${u.href} is zmail endpoint (base ${base.href})`,
-    );
     return (
       u.origin === base.origin &&
       u.pathname.replace(/\/+$/, '') === base.pathname.replace(/\/+$/, '')
@@ -28,9 +33,23 @@ export function isZmailEndpoint(requestUrl: string): boolean {
   }
 }
 
+export function isZmailApiBody(
+  body: Record<string, unknown> | undefined,
+): boolean {
+  return (
+    typeof body?.action === 'string' &&
+    ZMAIL_API_ACTIONS.has(body.action as string)
+  );
+}
+
 export const httpRequestInputSchema = z
   .object({
-    url: z.string().url().describe('The URL to request.'),
+    url: z
+      .string()
+      .url()
+      .describe(
+        `Request URL. Course zmail API (only host that receives apikey merge): ${ZMAIL_API_URL}`,
+      ),
     method: z
       .enum(['GET', 'POST'])
       .default('GET')
@@ -40,7 +59,8 @@ export const httpRequestInputSchema = z
       .optional()
       .describe(
         'Required when method is POST: JSON object as raw body (serialised automatically). ' +
-          'Course zmail: start with {"action":"help"}; `apikey` is injected from HUB_API_KEY for this endpoint — do not invent it.',
+          `For zmail use url ${ZMAIL_API_URL} with e.g. {"action":"help"}. ` +
+          'Prefer search_mail / download_mail_content for mailbox work. apikey is injected from HUB_API_KEY on the course zmail URL only.',
       ),
     headers: z
       .record(z.string(), z.string())
@@ -88,6 +108,19 @@ export async function executeHttpRequest(
 
   const { url, method, body, headers: extraHeaders } = parsed.data;
 
+  if (
+    method === 'POST' &&
+    isZmailApiBody(body) &&
+    !isZmailEndpoint(url)
+  ) {
+    return mcpErr(
+      `Zmail API calls must use exactly ${ZMAIL_API_URL}. ` +
+        'Do not use other hosts (e.g. zmail.com). ' +
+        'Use search_mail and download_mail_content for mailbox actions, ' +
+        'or http_request only with the course URL above.',
+    );
+  }
+
   try {
     const init: RequestInit = {
       method,
@@ -101,10 +134,6 @@ export async function executeHttpRequest(
         body && isZmailEndpoint(url) ? mergeHubApiKeyForZmail(body) : body;
       init.body = JSON.stringify(raw);
     }
-
-    console.log(
-      `Making HTTP request to ${url} with method ${method}, body: ${init.body ?? 'none'}, headers: ${JSON.stringify(init.headers)}`,
-    );
 
     const response = await fetchWithRetry(url, init);
     const rawText = await response.text();

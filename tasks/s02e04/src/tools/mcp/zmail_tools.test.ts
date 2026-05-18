@@ -56,33 +56,13 @@ describe("search_mail", () => {
   });
 });
 
-describe("download_mail_content", () => {
+describe("download_mail_content (integration with search_mail)", () => {
   afterEach(() => {
     globalThis.fetch = global.fetch;
     delete process.env.HUB_API_KEY;
   });
 
-  it("posts getMessages with single numeric id", async () => {
-    process.env.HUB_API_KEY = "k";
-    let capturedBody: string | null = null;
-    globalThis.fetch = mock(async (_url, init) => {
-      capturedBody = init?.body as string;
-      return new Response(JSON.stringify({ ok: true, messages: [] }), {
-        status: 200,
-      });
-    }) as unknown as typeof fetch;
-
-    await executeDownloadMailContent({ ids: 127 });
-
-    const body = JSON.parse(capturedBody!);
-    expect(body).toEqual({
-      apikey: "k",
-      action: "getMessages",
-      ids: 127,
-    });
-  });
-
-  it("posts getMessages with array of ids", async () => {
+  it("posts getMessages with messageID array", async () => {
     process.env.HUB_API_KEY = "k";
     let capturedBody: string | null = null;
     globalThis.fetch = mock(async (_url, init) => {
@@ -90,13 +70,14 @@ describe("download_mail_content", () => {
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     }) as unknown as typeof fetch;
 
-    await executeDownloadMailContent({ ids: [1, "deadbeefdeadbeefdeadbeefdeadbeef"] });
+    const id = "deadbeefdeadbeefdeadbeefdeadbeef";
+    await executeDownloadMailContent({ ids: [id, "a7353b90b3c7d973255aa6cf36bcba0f"] });
 
     const body = JSON.parse(capturedBody!);
     expect(body).toEqual({
       apikey: "k",
       action: "getMessages",
-      ids: [1, "deadbeefdeadbeefdeadbeefdeadbeef"],
+      ids: [id, "a7353b90b3c7d973255aa6cf36bcba0f"],
     });
   });
 });

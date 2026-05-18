@@ -12,7 +12,8 @@ export const searchMailInputSchema = z.object({
     .string()
     .min(1)
     .describe(
-      "Gmail-style query: from:, to:, subject:, OR, AND, \"phrase\", -exclude.",
+      "Gmail-style query: from:, to:, subject:, OR, AND, \"phrase\", -exclude. " +
+        "Each hit in the response includes messageID (32-char hex) — pass that to download_mail_content, not rowID.",
     ),
   page: z
     .number()
