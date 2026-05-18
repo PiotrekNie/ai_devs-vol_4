@@ -71,6 +71,48 @@ function extractResponseText(data: unknown): string | null {
     : null;
 }
 
+function extractReasoningText(output: unknown[] | undefined): string | null {
+  if (!Array.isArray(output)) return null;
+  const parts: string[] = [];
+
+  for (const item of output) {
+    if (typeof item !== "object" || item === null) continue;
+    const o = item as Record<string, unknown>;
+    if (o.type !== "reasoning" && o.type !== "thought") continue;
+
+    if (typeof o.text === "string" && o.text.trim()) parts.push(o.text.trim());
+    if (typeof o.content === "string" && o.content.trim()) {
+      parts.push(o.content.trim());
+    }
+    if (Array.isArray(o.summary)) {
+      for (const s of o.summary) {
+        if (
+          typeof s === "object" &&
+          s !== null &&
+          typeof (s as { text?: unknown }).text === "string"
+        ) {
+          const t = (s as { text: string }).text.trim();
+          if (t) parts.push(t);
+        }
+      }
+    }
+  }
+
+  const joined = parts.join("\n").trim();
+  return joined || null;
+}
+
+function extractAssistantText(data: unknown): string | null {
+  return (
+    extractResponseText(data) ??
+    extractReasoningText(
+      typeof data === "object" && data !== null
+        ? ((data as { output?: unknown[] }).output ?? undefined)
+        : undefined,
+    )
+  );
+}
+
 /**
  * Filters reasoning/thought items from Responses API output so they are not
  * replayed on every subsequent turn (significant context saving).
@@ -202,7 +244,7 @@ export async function chat(
   const output = (data["output"] as unknown[] | undefined) ?? [];
   const toolCalls = extractToolCalls(output);
   const rawOutputItems = compactOutputItems(output);
-  const content = extractResponseText(data);
+  const content = extractAssistantText(data);
 
   return { content, toolCalls, rawOutputItems };
 }

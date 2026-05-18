@@ -47,6 +47,7 @@ All keys are optional unless noted; the defaults are shown in [.env.example](./.
 | `AGENT_VISION_MODEL`                     | No                  | `gpt-4o-mini`                   | Model for `analyze_image_vision` tool            |
 | `AGENT_MAX_ITERATIONS`                   | No                  | `10`                            | ReAct loop iteration cap                         |
 | `AGENT_PLANNING_MAX_OUTPUT_TOKENS`       | No                  | `1024`                          | Max tokens for turn 0 when `enablePlanningPhase` is true |
+| `AGENT_ENABLE_PLANNING`                  | No                  | —                               | When set to `true`/`1`, enables turn 0 if `createAgent` omits the flag |
 | `AGENT_MAX_TOOL_OUTPUT_CHARS`            | No                  | `24000`                         | Max chars echoed per tool result                 |
 | `AGENT_MAX_FILE_READ_CHARS`              | No                  | `50000`                         | Max chars returned by `read_file`                |
 | `AGENT_RETRY_BASE_DELAY_MS`              | No                  | `1000`                          | Base retry delay for 429/503 errors              |

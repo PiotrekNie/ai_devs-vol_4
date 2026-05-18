@@ -2,27 +2,47 @@
  * Turn-0 planning phase — working plan injected into instructions.
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import type { AIAdapter, ChatOptions } from './ai.js';
-import { PLANNING_MAX_OUTPUT_TOKENS } from '../../config.js';
-import { logPlan, logSystem } from '../utils/logger.js';
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import type { AIAdapter, ChatOptions } from "./ai.js";
+import { PLANNING_MAX_OUTPUT_TOKENS } from "../../config.js";
+import { logPlan, logSystem } from "../utils/logger.js";
 
-export const WORKING_PLAN_MARKER = '\n\n---\n## Working plan';
+export const WORKING_PLAN_MARKER = "\n\n---\n## Working plan";
 
 const PLANNING_PROMPT_PATH = join(
   dirname(fileURLToPath(import.meta.url)),
-  '../prompts/planning_turn.md',
+  "../prompts/planning_turn.md",
 );
 
 let cachedPlanningPrompt: string | null = null;
 
 export function loadPlanningTurnPrompt(): string {
   if (cachedPlanningPrompt === null) {
-    cachedPlanningPrompt = readFileSync(PLANNING_PROMPT_PATH, 'utf8');
+    cachedPlanningPrompt = readFileSync(PLANNING_PROMPT_PATH, "utf8");
   }
   return cachedPlanningPrompt;
+}
+
+/**
+ * Resolve planning flag: explicit `createAgent({ enablePlanningPhase })` wins,
+ * then `AGENT_ENABLE_PLANNING=true|1` in the environment.
+ */
+export function resolveEnablePlanningPhase(explicit?: boolean): boolean {
+  if (explicit !== undefined) return explicit;
+  const raw = process.env.AGENT_ENABLE_PLANNING?.trim().toLowerCase();
+  return raw === "true" || raw === "1";
+}
+
+export function collectToolNames(tools: unknown[]): string[] {
+  const names: string[] = [];
+  for (const t of tools) {
+    if (!t || typeof t !== "object") continue;
+    const name = (t as { name?: unknown }).name;
+    if (typeof name === "string" && name.length > 0) names.push(name);
+  }
+  return names;
 }
 
 export function stripPreviousWorkingPlan(instructions: string): string {
@@ -38,13 +58,22 @@ export function injectWorkingPlan(
   const base = stripPreviousWorkingPlan(instructions);
   const body =
     planText.trim() ||
-    'Plan unavailable — proceed cautiously and revise as you learn.';
+    "Plan unavailable — proceed cautiously and revise as you learn.";
   return `${base}${WORKING_PLAN_MARKER}\n\n${body}`;
 }
 
-export function buildPlanningInstructions(baseInstructions: string): string {
+export function buildPlanningInstructions(
+  baseInstructions: string,
+  toolNames: string[] = [],
+): string {
   const planning = loadPlanningTurnPrompt().trim();
-  return `${stripPreviousWorkingPlan(baseInstructions)}\n\n---\n${planning}`;
+  const toolsLine =
+    toolNames.length > 0
+      ? `\n\nAvailable tools (name them in the plan only — **do not call** in turn 0): ${toolNames.join(", ")}.`
+      : "";
+  const turnZero =
+    "\n\n**Turn 0:** Reply with the working plan as plain text in this assistant message. No tool calls.";
+  return `${stripPreviousWorkingPlan(baseInstructions)}\n\n---\n${planning}${toolsLine}${turnZero}`;
 }
 
 export async function runPlanningTurn(args: {
@@ -57,28 +86,34 @@ export async function runPlanningTurn(args: {
   instructionsWithPlan: string;
   conversationAfterPlan: unknown[];
 }> {
-  const planningInstructions = buildPlanningInstructions(args.instructions);
+  const toolNames = collectToolNames(args.tools);
+  const planningInstructions = buildPlanningInstructions(
+    args.instructions,
+    toolNames,
+  );
 
+  // Turn 0 must not register tools — otherwise some models call tools despite
+  // tool_choice: "none", and [PLAN] never appears as a dedicated plan turn.
   const response = await args.ai.generateResponse(
     args.conversation,
-    args.tools,
+    [],
     planningInstructions,
     {
       ...args.chatOptions,
-      toolChoice: 'none',
+      toolChoice: "none",
       maxOutputTokens:
         args.chatOptions?.maxOutputTokens ?? PLANNING_MAX_OUTPUT_TOKENS,
     },
   );
 
   if (response.toolCalls.length > 0) {
-    logSystem('Planning turn returned tool calls; ignoring', {
+    logSystem("Planning turn returned tool calls; ignoring", {
       count: response.toolCalls.length,
     });
   }
 
-  const planText = response.content?.trim() ?? '';
-  logPlan(planText || '(empty plan)');
+  const planText = response.content?.trim() ?? "";
+  logPlan(planText || "(empty plan — check model outputs reasoning-only)");
 
   const instructionsWithPlan = injectWorkingPlan(args.instructions, planText);
 
@@ -92,9 +127,9 @@ export async function runPlanningTurn(args: {
     conversationAfterPlan = [
       ...conversationAfterPlan,
       {
-        type: 'message',
-        role: 'assistant',
-        content: [{ type: 'output_text', text: planText }],
+        type: "message",
+        role: "assistant",
+        content: [{ type: "output_text", text: planText }],
       },
     ];
   }

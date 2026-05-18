@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { AGENT_MAX_OUTPUT_TOKENS, DEFAULT_AGENT_MODEL } from "./config.js";
 import { createAgent } from "./src/agent/agent.js";
 import { createAIAdapter } from "./src/agent/ai.js";
+import { resolveEnablePlanningPhase } from "./src/agent/planning.js";
 import { createMailboxMemoryHooks } from "./src/agent/mailbox_memory.js";
 import {
   callMcpTool,
@@ -40,8 +41,8 @@ const instructions = [
   "",
 ].join("\n\n");
 
-/** Turn-0 planning LLM call (tool_choice: none). Must match user query below. */
-const enablePlanningPhase = true;
+/** Turn-0 planning (empty tools on API turn 0). Override via AGENT_ENABLE_PLANNING. */
+const enablePlanningPhase = resolveEnablePlanningPhase(true);
 
 const mailboxUserQuery = enablePlanningPhase
   ? "Rozpocznij zadanie mailbox. Tura 0: plan z Ograniczeniami domenowymi. Po search_mail zawsze download_mail_content po messageID (32 znaki), nigdy rowID. submit_to_hub aż do {FLG:...}. Krótkie myśli — priorytet narzędzia."

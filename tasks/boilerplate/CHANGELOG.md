@@ -12,6 +12,14 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - **Planning phase (turn 0)** — opt-in `enablePlanningPhase` on `createAgent`: one `tool_choice: "none"` turn before the ReAct loop (logged as `[PLAN]`), injects `## Working plan` into instructions; does not count toward `MAX_ITERATIONS`. `AGENT_PLANNING_MAX_OUTPUT_TOKENS` (default 1024). Helpers exported from `src/agent/planning.ts`.
+- **`resolveEnablePlanningPhase`**, **`collectToolNames`** — env `AGENT_ENABLE_PLANNING` + explicit flag; tool names in planning instructions without registering tools on turn 0.
+- **`http_request` tests** — POST without `body` rejected before fetch.
+
+### Changed
+
+- **Planning turn 0** — `generateResponse` receives **empty tools** (names only in instructions); fixes models that ignored `tool_choice: "none"` and skipped `[PLAN]`.
+- **`ai.ts`** — plan text fallback from `reasoning` / `thought` output items when `output_text` is empty.
+- **`http_request`** — Zod + runtime: POST requires JSON `body` (generic, no zmail constants in boilerplate).
 
 ### Fixed
 

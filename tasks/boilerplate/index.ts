@@ -17,6 +17,8 @@ export * from "./src/utils/logger.js";
 export {
   WORKING_PLAN_MARKER,
   loadPlanningTurnPrompt,
+  resolveEnablePlanningPhase,
+  collectToolNames,
   stripPreviousWorkingPlan,
   injectWorkingPlan,
   buildPlanningInstructions,

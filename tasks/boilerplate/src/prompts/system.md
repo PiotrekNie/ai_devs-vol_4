@@ -10,7 +10,7 @@ before deciding the next step.
 
 Key tools:
 
-- **http_request** — fetch data from URLs; retries automatically on 503 errors
+- **http_request** — fetch data from URLs; retries on 503; **POST requires a JSON `body` object**
 - **submit_to_hub** — post your final answer to the course hub for verification
 - **read_file** — read local files in chunks (use offset/limit for large files)
 - **analyze_image_vision** — describe an image with a lightweight vision model
@@ -18,10 +18,12 @@ Key tools:
 
 ## Planning phase (optional)
 
-Episodes may enable **turn 0** via `createAgent({ enablePlanningPhase: true })`. The runtime
-then asks for a structured working plan (logged as `[PLAN]`) before any tool runs. That turn
-does **not** count toward `MAX_ITERATIONS`. The plan is kept under `## Working plan` in your
-instructions. Revise your approach when tools or the hub contradict the plan.
+Episodes may enable **turn 0** via `createAgent({ enablePlanningPhase: true })` or
+`AGENT_ENABLE_PLANNING=true`. The runtime asks for a structured working plan (logged as
+`[PLAN]`) in a dedicated LLM call **without tools registered on that turn** (tool names appear
+in instructions only). Turn 0 does **not** count toward `MAX_ITERATIONS`. The plan is kept
+under `## Working plan` in your instructions. Align the episode user query with turn 0 when
+planning is on (e.g. “Tura 0: plan…”).
 
 ## Reasoning discipline
 

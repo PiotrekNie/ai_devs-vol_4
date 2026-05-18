@@ -172,6 +172,48 @@ describe("createAgent — processQuery", () => {
     expect(getCallCount()).toBe(3);
   });
 
+  it("planning turn calls generateResponse with empty tools on turn 0", async () => {
+    const toolsPerCall: number[] = [];
+    const adapter = {
+      generateResponse: async (
+        _messages: unknown[],
+        tools: unknown[],
+      ) => {
+        toolsPerCall.push(tools.length);
+        if (toolsPerCall.length === 1) {
+          return {
+            content: "Goal: mailbox",
+            toolCalls: [],
+            rawOutputItems: [],
+          };
+        }
+        return {
+          content: "done",
+          toolCalls: [],
+          rawOutputItems: [],
+        };
+      },
+    };
+
+    const agent = createAgent({
+      ai: adapter,
+      instructions: "Test.",
+      tools: [{ type: "function", name: "no_op" }],
+      handlers: {
+        no_op: {
+          label: "[Test]",
+          execute: async () => ({ ok: true }),
+        },
+      },
+      enablePlanningPhase: true,
+      maxIterations: 1,
+    });
+
+    await agent.processQuery("Plan.");
+    expect(toolsPerCall[0]).toBe(0);
+    expect(toolsPerCall[1]).toBe(1);
+  });
+
   it("with enablePlanningPhase false skips plan turn (one fewer LLM call)", async () => {
     const { adapter, getCallCount } = countAdapterCalls([
       toolCallResponse("no_op", {}),

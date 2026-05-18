@@ -23,9 +23,10 @@ describe("planning helpers", () => {
     expect(out).toContain("Plan unavailable");
   });
 
-  it("buildPlanningInstructions includes planning turn prompt", () => {
-    const out = buildPlanningInstructions("Episode rules");
+  it("buildPlanningInstructions includes planning turn prompt and tool names", () => {
+    const out = buildPlanningInstructions("Episode rules", ["search_mail"]);
     expect(out).toContain("Episode rules");
     expect(out).toContain("Planning turn");
+    expect(out).toContain("search_mail");
   });
 });
