@@ -27,6 +27,6 @@ lessons/03_04_gmail/evals/
 # Markdowns — course lesson transcripts; skip to keep context window focused on task code
 markdowns/
 
-# MCP local server — compiled output (not source of truth)
-mcp/eversis-collections-mcp/node_modules/
-mcp/eversis-collections-mcp/dist/
+# eversis-collections MCP (submodule) — build artifacts / deps
+third-party/github-collections/mcp/eversis-collections-mcp/node_modules/
+third-party/github-collections/mcp/eversis-collections-mcp/dist/

@@ -15,6 +15,14 @@ import type { McpToolResponse } from "../../types/index.js";
 
 const FLAG_PATTERN = /\{FLG:[^}]+\}/;
 
+/** JSON-serializable hub answer (no z.unknown — Responses API rejects untyped properties). */
+const hubAnswerLeaf = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
 export const submitToHubInputSchema = z.object({
   task_name: z
     .string()
@@ -23,10 +31,14 @@ export const submitToHubInputSchema = z.object({
         "Matches the task field in the hub request body.",
     ),
   answer: z
-    .unknown()
+    .union([
+      z.record(z.string(), hubAnswerLeaf),
+      z.array(hubAnswerLeaf),
+      hubAnswerLeaf,
+    ])
     .describe(
-      "The answer to submit. Sent as-is in the `answer` field. " +
-        "Can be a string, number, array, or object.",
+      "Payload for the hub `answer` field. Use an object for typical tasks " +
+        "(string values, numbers, booleans, or null per key).",
     ),
 });
 export type SubmitToHubInput = z.infer<typeof submitToHubInputSchema>;

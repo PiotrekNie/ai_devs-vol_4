@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Project stack — AI Devs vol. 4
 
-This repository contains course tasks for **AI Devs 4** and is integrated with the **Cursor Collections** (Eversis) framework. The framework documentation lives in [documentation/cursor-collection.md](documentation/cursor-collection.md); the workflow entry point is [AGENTS.md](AGENTS.md).
+This repository contains course tasks for **AI Devs 4** and consumes the **Cursor Collections** (Eversis) framework via the git submodule **[`third-party/github-collections`](../../third-party/github-collections)** — symlinked `.cursor/prompts`, `.cursor/skills`, and shared rules. The authoritative framework doc is **[`third-party/github-collections/documentation/cursor-collection.md`](../../third-party/github-collections/documentation/cursor-collection.md)** (also reachable as **[`documentation/cursor-collection.md`](../../documentation/cursor-collection.md)**); the workflow entry point is **[`AGENTS.md`](../../AGENTS.md)**.
 
 | Area | This repository |
 | ---- | --------------- |

@@ -5,21 +5,22 @@ Monorepo containing task solutions for the **AI Devs 4** course, integrated with
 ## Repository structure
 
 ```text
+third-party/github-collections/   # Git submodule — Cursor Collections (Eversis) upstream
 .cursor/
-  rules/       # eversis-*.mdc (always-on + on-demand) + Bun rule
-  prompts/     # public/ and internal/ eversis-*.md — attach with @eversis-*
-  skills/      # eversis-*/ — loaded via eversis-collections MCP
-  mcp.json     # workspace MCP config (eversis-collections + third-party servers)
-mcp/
-  eversis-collections-mcp/  # local MCP server — build before first use
+  rules/       # eversis-project-stack + use-bun (local); other rules symlink → submodule
+  prompts/     # symlink → submodule — attach @eversis-*
+  skills/      # symlink → submodule — eversis-collections MCP
+  commands/    # symlink → submodule — /eversis-* project commands
+  mcp.json     # workspace MCP (eversis-collections path → submodule + optional third-party servers)
 tasks/
   shared/      # common types and utilities
   docs/        # boilerplate-documentation.md — agent architecture spec
-  s01e01/ … s02e03/  # one directory per episode
+  s01e01/ …    # one directory per episode
 scripts/
-  sync-cursor-collections-from-upstream.sh  # update vendored framework
+  link-cursor-collections.sh     # refresh .cursor symlinks after submodule init
+  sync-cursor-collections.mjs    # bump submodule + optional MCP build
 documentation/
-  cursor-collection.md  # Cursor Collections framework reference
+  cursor-collection.md           # symlink → submodule framework reference
 AGENTS.md      # entry point for Cursor agent workflow
 ```
 
@@ -35,6 +36,19 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s02e01` | `categorize` — token-budget prompt classification with self-repair |
 | `s02e02` | `electricity` — 3×3 tile board solver (vision → plan → rotate) |
 | `s02e03` | `failurecode` — ReAct agent with MCP tools, Observer/Reflector memory |
+
+## Clone (submodules)
+
+Use recursive clone so **Cursor Collections** is checked out:
+
+```bash
+git clone --recurse-submodules <repo-url>
+# existing checkout without submodules:
+git submodule update --init --recursive
+bash scripts/link-cursor-collections.sh
+```
+
+On **Windows**, enable symlinks for Git (`core.symlinks true`) so `.cursor/` links resolve.
 
 ## Quick start
 
@@ -63,12 +77,14 @@ This repository is fully integrated with the **Cursor Collections** (Eversis) fr
 
 ### First-time MCP setup
 
-Build the local `eversis-collections` MCP server once after cloning:
+Build the local `eversis-collections` MCP server once after cloning (lives in the submodule):
 
 ```bash
-cd mcp/eversis-collections-mcp
-npm install && npm run build
+cd third-party/github-collections/mcp/eversis-collections-mcp
+npm ci && npm run build
 ```
+
+Or from `scripts/`: `npm run build:mcp`.
 
 Then open the repo in Cursor and enable the workspace MCP config when prompted (`Cursor → MCP → Enable workspace config`). The `eversis-collections` server exposes `eversis_skills_list`, `eversis_skills_get`, and related tools for agent use.
 
@@ -79,7 +95,7 @@ Then open the repo in Cursor and enable the workspace MCP config when prompted (
 | Implement a new task | Attach `@eversis-implement` + task description |
 | Review code | Attach `@eversis-review` |
 | Browse skills | Agent calls `eversis_skills_list` / `eversis_skills_get` via MCP |
-| Sync framework from upstream | `./scripts/sync-cursor-collections-from-upstream.sh` |
+| Bump framework submodule | `node scripts/sync-cursor-collections.mjs` (optional `--build-mcp`) |
 
 ### Active rules
 

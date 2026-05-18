@@ -61,46 +61,40 @@ export function mcpToolResultToText(result: unknown): string {
 // ── Schema normalisation ──────────────────────────────────────────────────────
 
 /**
- * Recursively ensures every object schema node has:
- *   - `additionalProperties: false`   (required by OpenAI strict mode)
- *   - `required` listing every property key  (Zod .default() can omit these)
- *
- * Also strips draft-07 meta keys (`$schema`, `$defs`, `definitions`) that
- * some strict validators reject.
+ * Strip JSON Schema meta keys and recurse — keeps Zod-emitted shapes (incl.
+ * `z.record` / optional fields). Does **not** force `additionalProperties: false`
+ * on every object (that broke `http_request` `body` and optional props).
  */
-function ensureStrictSchema(schema: unknown): unknown {
+function sanitizeToolJsonSchema(schema: unknown): unknown {
   if (schema == null || typeof schema !== "object") return schema;
-  if (Array.isArray(schema)) return schema.map(ensureStrictSchema);
+  if (Array.isArray(schema)) return schema.map(sanitizeToolJsonSchema);
 
   const out = { ...(schema as Record<string, unknown>) };
   delete out["$schema"];
   delete out["$defs"];
   delete out["definitions"];
 
-  if (out["type"] === "object") {
-    out["additionalProperties"] = false;
-    if (out["properties"] && typeof out["properties"] === "object") {
-      const props: Record<string, unknown> = {};
-      for (const k of Object.keys(
-        out["properties"] as Record<string, unknown>,
-      )) {
-        props[k] = ensureStrictSchema(
-          (out["properties"] as Record<string, unknown>)[k],
-        );
-      }
-      out["properties"] = props;
-      out["required"] = Object.keys(props);
+  if (out["properties"] && typeof out["properties"] === "object") {
+    const props = out["properties"] as Record<string, unknown>;
+    const next: Record<string, unknown> = {};
+    for (const k of Object.keys(props)) {
+      next[k] = sanitizeToolJsonSchema(props[k]);
     }
+    out["properties"] = next;
   }
 
-  if (out["type"] === "array" && out["items"]) {
-    out["items"] = ensureStrictSchema(out["items"]);
+  if (out["items"]) {
+    out["items"] = sanitizeToolJsonSchema(out["items"]);
   }
 
   for (const key of ["allOf", "anyOf", "oneOf"] as const) {
     if (Array.isArray(out[key])) {
-      out[key] = (out[key] as unknown[]).map(ensureStrictSchema);
+      out[key] = (out[key] as unknown[]).map(sanitizeToolJsonSchema);
     }
+  }
+
+  if (out["not"]) {
+    out["not"] = sanitizeToolJsonSchema(out["not"]);
   }
 
   return out;
@@ -108,7 +102,10 @@ function ensureStrictSchema(schema: unknown): unknown {
 
 /**
  * Converts the MCP tool list returned by `listMcpTools` to OpenAI
- * Responses API function-calling definitions (strict mode compatible).
+ * Responses API function-calling definitions.
+ *
+ * Uses `strict: false` so optional tool fields and `z.record` bodies stay valid
+ * (strict + old ensureStrictSchema caused HTTP 400 with OpenRouter/OpenAI).
  */
 export function mcpToolsToOpenAI(
   mcpTools: Awaited<ReturnType<typeof listMcpTools>>,
@@ -117,7 +114,10 @@ export function mcpToolsToOpenAI(
     type: "function" as const,
     name: tool.name,
     description: tool.description ?? "",
-    parameters: ensureStrictSchema(tool.inputSchema),
-    strict: true,
+    parameters: sanitizeToolJsonSchema(tool.inputSchema) as Record<
+      string,
+      unknown
+    >,
+    strict: false,
   }));
 }

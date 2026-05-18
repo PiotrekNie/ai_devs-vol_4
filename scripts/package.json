@@ -1,0 +1,10 @@
+{
+  "name": "ai-devs-cursor-scripts",
+  "private": true,
+  "description": "Submodule bump, symlink refresh, and eversis-collections-mcp build. Run with cwd = scripts/.",
+  "scripts": {
+    "sync:collections": "node ./sync-cursor-collections.mjs",
+    "build:mcp": "npm install --prefix ../third-party/github-collections/mcp/eversis-collections-mcp && npm run build --prefix ../third-party/github-collections/mcp/eversis-collections-mcp",
+    "start:mcp": "npm run start --prefix ../third-party/github-collections/mcp/eversis-collections-mcp"
+  }
+}

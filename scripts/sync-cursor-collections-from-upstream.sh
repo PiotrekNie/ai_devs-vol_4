@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# DEPRECATED — this repository consumes Cursor Collections via
+# `third-party/github-collections` (git submodule) and
+# `scripts/link-cursor-collections.sh` + `node scripts/sync-cursor-collections.mjs`.
+# Do not use this rsync script for day-to-day updates; it is kept only as a
+# historical escape hatch if someone needs to bulk-copy from a local clone.
+#
 # sync-cursor-collections-from-upstream.sh
 #
 # Synchronises the vendored Cursor Collections (Eversis) framework layer
@@ -26,8 +32,8 @@
 #   excluded files above.
 #
 # AFTER SYNC
-#   Rebuild the local MCP server:
-#     cd mcp/eversis-collections-mcp && npm install && npm run build
+#   Rebuild the local MCP server (if still using paths below — prefer submodule):
+#     cd third-party/github-collections/mcp/eversis-collections-mcp && npm ci && npm run build
 
 set -euo pipefail
 

@@ -1,0 +1,4 @@
+[submodule "third-party/github-collections"]
+	path = third-party/github-collections
+	url = https://github.com/PiotrNie-Eversis/cursor-collections.git
+	branch = main

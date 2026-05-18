@@ -57,7 +57,7 @@
     },
     "eversis-collections": {
       "command": "node",
-      "args": ["mcp/eversis-collections-mcp/dist/index.js"],
+      "args": ["third-party/github-collections/mcp/eversis-collections-mcp/dist/index.js"],
       "type": "stdio"
     }
   },

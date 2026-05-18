@@ -178,7 +178,7 @@ Każde nowe zadanie realizuj zgodnie z workflow opisanym w [AGENTS.md](../../AGE
 
 ### Skills (`.cursor/skills/`, przez MCP `eversis-collections`)
 
-Po uruchomieniu lokalnego serwera MCP (`node mcp/eversis-collections-mcp/dist/index.js`) agent może wywołać narzędzia `eversis_skills_list` i `eversis_skills_get`, aby odczytać proceduralne instrukcje dla konkretnych technologii (np. `eversis-implementing-backend`, `eversis-sql-and-database-understanding`).
+Po uruchomieniu lokalnego serwera MCP (`node third-party/github-collections/mcp/eversis-collections-mcp/dist/index.js`, po `npm ci && npm run build` w tym katalogu) agent może wywołać narzędzia `eversis_skills_list` i `eversis_skills_get`, aby odczytać proceduralne instrukcje dla konkretnych technologii (np. `eversis-implementing-backend`, `eversis-sql-and-database-understanding`).
 
 ### Kluczowe konwencje wymuszane przez reguły
 
