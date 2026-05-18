@@ -6,7 +6,8 @@
   "private": true,
   "description": "Reusable ReAct agent runtime for AI Devs 4 course tasks",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^25.9.0"
   },
   "peerDependencies": {
     "typescript": "^5"

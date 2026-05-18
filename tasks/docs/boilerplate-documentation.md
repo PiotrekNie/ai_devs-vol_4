@@ -85,16 +85,17 @@ type ModelResponse = {
 **Przepływ (Workflow):**
 
 1. Przyjmij zadanie (Task) i załaduj System Prompt (`/prompts/system.md`).
-2. Rozpocznij pętlę (do `MAX_ITERATIONS`).
-3. Wywołaj `ai.ts`. Wypisz `content` używając `logger.logThought()`.
-4. Jeśli model zwrócił `toolCalls`:
+2. Opcjonalnie (`enablePlanningPhase: true`): **tura 0** — plan bez narzędzi (`tool_choice: none`), log `[PLAN]`, blok `## Working plan` w instructions; **nie** wlicza się do `MAX_ITERATIONS`.
+3. Rozpocznij pętlę ReAct (do `MAX_ITERATIONS`).
+4. Wywołaj `ai.ts`. Wypisz `content` używając `logger.logThought()`.
+5. Jeśli model zwrócił `toolCalls`:
 
 - Zweryfikuj typ narzędzia (Native vs MCP).
 - Zablokuj pętlę i poczekaj na wynik (`await executeTool()`).
 - Zapisz wynik za pomocą `logger.logResult()`.
 - Dodaj wynik do kontekstu jako nową wiadomość typu `tool_result`.
 
-5. Jeśli wykonano narzędzie `finish_task` -> przerwij pętlę, zwróć wynik.
+6. Jeśli wykonano narzędzie `finish_task` -> przerwij pętlę, zwróć wynik.
 
 ### 4.3. Zarządzanie Pamięcią (`src/agent/memory.ts`)
 

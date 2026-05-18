@@ -113,6 +113,8 @@ export type ChatParams = {
 export type ChatOptions = {
   /** Override retry base delay in ms. Pass 0 in tests. */
   retryDelayBaseMs?: number;
+  toolChoice?: "auto" | "none" | "required";
+  maxOutputTokens?: number;
 };
 
 // ── AIAdapter interface ───────────────────────────────────────────────────────
@@ -228,7 +230,8 @@ export function createAIAdapter(cfg: {
           tools,
           instructions,
           reasoning: cfg.reasoning,
-          maxOutputTokens: cfg.maxOutputTokens,
+          toolChoice: options?.toolChoice,
+          maxOutputTokens: options?.maxOutputTokens ?? cfg.maxOutputTokens,
         },
         options,
       );

@@ -24,6 +24,10 @@
  *   };
  *
  * Reference implementation: tasks/s02e03/src/observationalMemory.ts
+ *
+ * When enablePlanningPhase is on, instructions may contain `## Working plan`.
+ * Do not strip that marker in beforeTurn — keep procedural plan separate from
+ * mailbox fact journal injected by createMailboxMemoryHooks.
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────

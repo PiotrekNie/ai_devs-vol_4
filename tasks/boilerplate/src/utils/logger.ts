@@ -2,6 +2,7 @@
  * Tagged, ANSI-colored logger for the agent runtime.
  *
  * Tags:
+ *   [PLAN]   — structured plan from turn 0 (enablePlanningPhase)
  *   [MYŚL]   — model's reasoning / thought content
  *   [AKCJA]  — tool dispatch (what the agent is doing)
  *   [WYNIK]  — tool result (what came back)
@@ -27,6 +28,11 @@ export const MCP_LABEL = `${c.cyan}[MCP]${c.reset}`;
 export const NATIVE_LABEL = `${c.yellow}[Native]${c.reset}`;
 
 // ── Primary tagged API ────────────────────────────────────────────────────────
+
+/** [PLAN] Turn-0 working plan (before ReAct tool loop). */
+export const logPlan = (text: string): void => {
+  console.log(`\n${c.magenta}${c.bold}[PLAN]${c.reset} ${text}`);
+};
 
 /** [MYŚL] Model's internal reasoning or text response. */
 export const logThought = (text: string): void => {

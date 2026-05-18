@@ -5,6 +5,9 @@
  *   processQuery(query)                   — single-turn query
  *   processConversationTurn(prev, query)  — multi-turn with session history
  *
+ * Optional enablePlanningPhase: turn 0 (tool_choice: none) runs before the loop
+ * and does not count toward MAX_ITERATIONS.
+ *
  * The loop terminates when:
  *   a) The model returns no tool calls (final text answer).
  *   b) The model calls `finish_task` (FinishTaskSignal caught here).
@@ -17,6 +20,7 @@
 import type { AIAdapter, ChatOptions } from "./ai.js";
 import type { ToolCall } from "../types/index.js";
 import type { MemoryHooks } from "./memory.js";
+import { runPlanningTurn } from "./planning.js";
 import { FinishTaskSignal } from "../tools/native/finish_task.js";
 import {
   logThought,
@@ -54,6 +58,11 @@ export type AgentConfig = {
   memory?: MemoryHooks;
   /** Optional ChatOptions passed to each generateResponse call. */
   chatOptions?: ChatOptions;
+  /**
+   * When true, run a planning turn (tool_choice: none) before the ReAct loop.
+   * Turn 0 does not count toward maxIterations. Default: false.
+   */
+  enablePlanningPhase?: boolean;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -122,14 +131,15 @@ export function createAgent({
   maxToolOutputChars = MAX_TOOL_OUTPUT_CHARS,
   memory,
   chatOptions,
+  enablePlanningPhase = false,
 }: AgentConfig) {
   async function runLoop(
     conversation: unknown[],
+    loopInstructions: string,
   ): Promise<{ text: string; nextConversation: unknown[] }> {
-    let currentInstructions = instructions;
+    let currentInstructions = loopInstructions;
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
-      // Memory hook: may trim conversation and inject journal
       if (memory?.beforeTurn) {
         const prep = await memory.beforeTurn({
           conversation,
@@ -151,7 +161,6 @@ export function createAgent({
         logThought(response.content);
       }
 
-      // Append model's output items (strips reasoning/thought, keeps function_call)
       conversation = [...conversation, ...response.rawOutputItems];
 
       if (response.toolCalls.length === 0) {
@@ -167,7 +176,6 @@ export function createAgent({
 
       logToolCount(response.toolCalls.length);
 
-      // Dispatch all tool calls; FinishTaskSignal exits the loop immediately
       let finishSignal: FinishTaskSignal | undefined;
       const toolResults: Array<{
         type: "function_call_output";
@@ -177,7 +185,11 @@ export function createAgent({
 
       for (const call of response.toolCalls) {
         try {
-          const result = await dispatchToolCall(call, handlers, maxToolOutputChars);
+          const result = await dispatchToolCall(
+            call,
+            handlers,
+            maxToolOutputChars,
+          );
           toolResults.push(result);
         } catch (err) {
           if (err instanceof FinishTaskSignal) {
@@ -195,7 +207,10 @@ export function createAgent({
         if (memory?.afterTurn) {
           await memory.afterTurn({ conversation, iteration });
         }
-        return { text: finishSignal.finalAnswer, nextConversation: conversation };
+        return {
+          text: finishSignal.finalAnswer,
+          nextConversation: conversation,
+        };
       }
 
       if (memory?.afterTurn) {
@@ -208,21 +223,33 @@ export function createAgent({
     return { text: guardMsg, nextConversation: conversation };
   }
 
+  async function startRun(
+    conversation: unknown[],
+  ): Promise<{ text: string; nextConversation: unknown[] }> {
+    if (!enablePlanningPhase) {
+      return runLoop(conversation, instructions);
+    }
+
+    const { instructionsWithPlan, conversationAfterPlan } =
+      await runPlanningTurn({
+        ai,
+        conversation,
+        instructions,
+        tools,
+        chatOptions,
+      });
+
+    return runLoop(conversationAfterPlan, instructionsWithPlan);
+  }
+
   return {
-    /**
-     * Single-turn query: starts a fresh conversation with the given user message.
-     */
     async processQuery(query: string): Promise<string> {
       logQuery(query);
       const conversation: unknown[] = [{ role: "user", content: query }];
-      const { text } = await runLoop(conversation);
+      const { text } = await startRun(conversation);
       return text;
     },
 
-    /**
-     * Multi-turn query: continues from a previous conversation state.
-     * Returns the answer text and the updated conversation for the next turn.
-     */
     async processConversationTurn(
       previousConversation: unknown,
       userMessage: string,
@@ -235,7 +262,7 @@ export function createAgent({
         ...prev,
         { role: "user", content: userMessage },
       ];
-      return runLoop(conversation);
+      return startRun(conversation);
     },
   };
 }

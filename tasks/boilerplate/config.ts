@@ -38,6 +38,12 @@ export const AGENT_VISION_MODEL =
 /** Maximum ReAct loop iterations before the agent gives up. */
 export const MAX_ITERATIONS = posInt("AGENT_MAX_ITERATIONS", 10);
 
+/** Max output tokens for planning turn 0 (outside MAX_ITERATIONS). */
+export const PLANNING_MAX_OUTPUT_TOKENS = posInt(
+  "AGENT_PLANNING_MAX_OUTPUT_TOKENS",
+  1024,
+);
+
 /**
  * Maximum characters echoed back per tool result.
  * Large outputs are truncated to prevent context overflow.
@@ -54,15 +60,17 @@ export const MAX_TOOL_OUTPUT_CHARS = Math.max(
 export const MAX_FILE_READ_CHARS = posInt("AGENT_MAX_FILE_READ_CHARS", 50_000);
 
 /** Base delay (ms) between retry attempts (doubles each attempt). */
-export const RETRY_BASE_DELAY_MS = nonNegInt("AGENT_RETRY_BASE_DELAY_MS", 1_000);
+export const RETRY_BASE_DELAY_MS = nonNegInt(
+  "AGENT_RETRY_BASE_DELAY_MS",
+  1_000,
+);
 
 /** Maximum number of retry attempts for 429/503 errors. */
 export const MAX_RETRY_ATTEMPTS = posInt("AGENT_MAX_RETRY_ATTEMPTS", 5);
 
 /** Default course hub verification endpoint. */
 export const HUB_VERIFY_URL =
-  process.env["HUB_VERIFY_URL"]?.trim() ??
-  "https://hub.ag3nts.org/verify";
+  process.env["HUB_VERIFY_URL"]?.trim() ?? "https://hub.ag3nts.org/verify";
 
 /** Course hub API key (required for submit_to_hub). */
 export const HUB_API_KEY = process.env["HUB_API_KEY"]?.trim() ?? "";

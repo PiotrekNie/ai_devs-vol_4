@@ -24,6 +24,10 @@
  *   };
  *
  * Reference implementation: tasks/s02e03/src/observationalMemory.ts
+ *
+ * When enablePlanningPhase is on, instructions may contain a `## Working plan` block
+ * (procedural). Do not strip that marker in beforeTurn — keep plan separate from
+ * declarative fact journals (e.g. mailbox working memory).
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────

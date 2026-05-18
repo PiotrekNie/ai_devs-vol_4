@@ -13,6 +13,16 @@ export * from "./src/types/index.js";
 // Logger
 export * from "./src/utils/logger.js";
 
+// Planning (turn 0)
+export {
+  WORKING_PLAN_MARKER,
+  loadPlanningTurnPrompt,
+  stripPreviousWorkingPlan,
+  injectWorkingPlan,
+  buildPlanningInstructions,
+  runPlanningTurn,
+} from "./src/agent/planning.js";
+
 // AI adapter
 export { chat, createAIAdapter, fetchWithRetry } from "./src/agent/ai.js";
 export type { AIAdapter, ChatParams, ChatOptions } from "./src/agent/ai.js";

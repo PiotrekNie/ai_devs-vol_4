@@ -113,6 +113,10 @@ export type ChatParams = {
 export type ChatOptions = {
   /** Override retry base delay in ms. Pass 0 in tests. */
   retryDelayBaseMs?: number;
+  /** Per-call tool_choice when tools are present (e.g. planning turn 0 uses "none"). */
+  toolChoice?: "auto" | "none" | "required";
+  /** Per-call max_output_tokens override (e.g. planning turn cap). */
+  maxOutputTokens?: number;
 };
 
 // ── AIAdapter interface ───────────────────────────────────────────────────────
@@ -228,7 +232,8 @@ export function createAIAdapter(cfg: {
           tools,
           instructions,
           reasoning: cfg.reasoning,
-          maxOutputTokens: cfg.maxOutputTokens,
+          toolChoice: options?.toolChoice,
+          maxOutputTokens: options?.maxOutputTokens ?? cfg.maxOutputTokens,
         },
         options,
       );

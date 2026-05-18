@@ -9,6 +9,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Planning phase (turn 0)** — opt-in `enablePlanningPhase` on `createAgent`: one `tool_choice: "none"` turn before the ReAct loop (logged as `[PLAN]`), injects `## Working plan` into instructions; does not count toward `MAX_ITERATIONS`. `AGENT_PLANNING_MAX_OUTPUT_TOKENS` (default 1024). Helpers exported from `src/agent/planning.ts`.
+
 ### Fixed
 
 - **Responses API tool schemas** — `submit_to_hub` no longer uses `z.unknown()` for `answer` (invalid JSON Schema / HTTP 400). `mcpToolsToOpenAI` uses `sanitizeToolJsonSchema` + `strict: false` so `http_request` `body` (`z.record`) and optional fields stay valid.

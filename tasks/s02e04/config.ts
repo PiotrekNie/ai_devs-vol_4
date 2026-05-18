@@ -38,6 +38,12 @@ export const AGENT_VISION_MODEL =
 /** Maximum ReAct loop iterations before the agent gives up. */
 export const MAX_ITERATIONS = posInt('AGENT_MAX_ITERATIONS', 50);
 
+/** Max output tokens for planning turn 0 (outside MAX_ITERATIONS). */
+export const PLANNING_MAX_OUTPUT_TOKENS = posInt(
+  'AGENT_PLANNING_MAX_OUTPUT_TOKENS',
+  1024,
+);
+
 /**
  * Maximum characters echoed back per tool result.
  * Large outputs are truncated to prevent context overflow.

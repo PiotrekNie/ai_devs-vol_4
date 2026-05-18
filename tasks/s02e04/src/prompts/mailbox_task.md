@@ -16,13 +16,13 @@ Przekaż **`task_name`: `mailbox`** oraz `answer` jako obiekt:
 
 **Bez halucynacji:** wartości muszą pochodzić z **treści** wiadomości pobranych przez `download_mail_content`, nie z samych tematów ani nagłówków.
 
-## Strategia (kolejność myślenia)
+## Ograniczenia domenowe (wejście do planu w turze 0)
 
-1. **`help`** (`http_request` → `POST` na URL zmail) — **`body`** musi zawierać JSON z **`action`** (np. `{ "action": "help" }`). Klucza `apikey` **nie** podajesz w argumencie — serwer MCP dokleja go z env. Najpierw ustal strukturę z odpowiedzi `help`, potem `getInbox` / `getThread` wg dokumentacji hubu.
-2. **Odkrycie:** `search_mail` z operatorami Gmail-like (`from:`, `subject:`, `OR`, `AND`, `"frazy"`). **Anchor:** Wiktor → `from:proton.me`; rozszerz zapytania gdy wynik pusty lub niekompletny.
-3. **Treść:** dla każdego kandydata wywołaj `download_mail_content` z `rowID` lub `messageID` (z listy / wątku).
-4. **Weryfikacja:** `submit_to_hub` — analizuj treść odpowiedzi hubu (braki / błędne pola). Poprawiaj kwerendy i czytaj kolejne maile.
-5. **Sukces:** odpowiedź ze wzorcem `{FLG:...}` → krótkie podsumowanie i **`finish_task`**.
+- Zmail: najpierw poznaj API (`help` przez `http_request` z JSON `action` w `body`; `apikey` dokleja MCP — nie podawaj w argumencie).
+- Dwuetapowość: metadane (`search_mail` / inbox) → pełna treść (`download_mail_content` / `getMessages`) przed wnioskami o `password`, dacie, `SEC-`.
+- Anchor wyszukiwania: Wiktor / `from:proton.me`; rozszerzaj zapytania Gmail-like gdy wynik pusty.
+- Hub: `submit_to_hub` z `task_name: mailbox` — iteruj po feedbacku; sukces to `{FLG:...}`.
+- **POST** na zmail zawsze wymaga obiektu JSON w `body`.
 
 ## Anty-wzorce
 

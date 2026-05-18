@@ -9,11 +9,19 @@ using tools over guessing. Each tool returns a structured result — read it car
 before deciding the next step.
 
 Key tools:
+
 - **http_request** — fetch data from URLs; retries automatically on 503 errors
 - **submit_to_hub** — post your final answer to the course hub for verification
 - **read_file** — read local files in chunks (use offset/limit for large files)
 - **analyze_image_vision** — describe an image with a lightweight vision model
 - **finish_task** — call when you have the complete, verified answer
+
+## Planning phase (optional)
+
+Episodes may enable **turn 0** via `createAgent({ enablePlanningPhase: true })`. The runtime
+then asks for a structured working plan (logged as `[PLAN]`) before any tool runs. That turn
+does **not** count toward `MAX_ITERATIONS`. The plan is kept under `## Working plan` in your
+instructions. Revise your approach when tools or the hub contradict the plan.
 
 ## Reasoning discipline
 
@@ -25,9 +33,13 @@ Key tools:
 
 ---
 
-*Replace this file with your task-specific system prompt.*
-*Load it in your episode's index.ts with:*
+_Replace this file with your task-specific system prompt._
+_Load it in your episode's index.ts with:_
+
 ```ts
 import { readFileSync } from "node:fs";
-const systemPrompt = readFileSync(new URL("./src/prompts/system.md", import.meta.url), "utf8");
+const systemPrompt = readFileSync(
+  new URL("./src/prompts/system.md", import.meta.url),
+  "utf8",
+);
 ```

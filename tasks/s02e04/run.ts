@@ -72,10 +72,11 @@ async function main() {
     tools: allTools,
     handlers,
     memory: createMailboxMemoryHooks(),
+    enablePlanningPhase: true,
   });
 
   const result = await agent.processQuery(
-    "Rozpocznij wykonanie zadania mailbox: działaj zgodnie z instrukcją systemową do momentu flagi lub jawnego braku postępu.",
+    "Rozpocznij wykonanie zadania mailbox. Przy budowie planu (tura 0) uwzględnij sekcję Ograniczenia domenowe w instrukcji. Działaj do flagi lub jawnego braku postępu.",
   );
   console.log(result);
 }

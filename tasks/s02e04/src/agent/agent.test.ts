@@ -11,9 +11,26 @@ function makeAdapter(responses: ModelResponse[]): AIAdapter {
   return {
     async generateResponse() {
       const resp = responses[call++];
-      if (!resp) throw new Error("Adapter: no more responses");
+      if (!resp) throw new Error(`Adapter: no more responses (call ${call})`);
       return resp;
     },
+  };
+}
+
+function countAdapterCalls(responses: ModelResponse[]): {
+  adapter: AIAdapter;
+  getCallCount: () => number;
+} {
+  let call = 0;
+  return {
+    adapter: {
+      async generateResponse() {
+        const resp = responses[call++];
+        if (!resp) throw new Error(`Adapter: no more responses (call ${call})`);
+        return resp;
+      },
+    },
+    getCallCount: () => call,
   };
 }
 
@@ -127,6 +144,32 @@ describe("createAgent — processQuery", () => {
     const result = await agent.processQuery("Loop.");
     expect(result).toContain("MAX_ITERATIONS");
     expect(result).toContain("3");
+  });
+
+  it("with enablePlanningPhase runs plan turn then ReAct", async () => {
+    const { adapter, getCallCount } = countAdapterCalls([
+      textResponse("Goal: mailbox"),
+      toolCallResponse("no_op", {}),
+      textResponse("done"),
+    ]);
+
+    const agent = createAgent({
+      ai: adapter,
+      instructions: "Test.",
+      tools: [],
+      handlers: {
+        no_op: {
+          label: "[Test]",
+          execute: async () => ({ ok: true }),
+        },
+      },
+      enablePlanningPhase: true,
+      maxIterations: 2,
+    });
+
+    const result = await agent.processQuery("Plan.");
+    expect(result).toBe("done");
+    expect(getCallCount()).toBe(3);
   });
 
   it("handles an unknown tool gracefully (returns error result, continues)", async () => {
