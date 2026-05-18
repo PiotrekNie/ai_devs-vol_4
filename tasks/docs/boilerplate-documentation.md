@@ -150,31 +150,31 @@ Repozytorium jest w pełni zintegrowane z frameworkiem [PiotrNie-Eversis/cursor-
 
 ### Workflow: Ideate → Implement → Review
 
-Każde nowe zadanie realizuj zgodnie z workflow opisanym w [AGENTS.md](../../AGENTS.md) i [documentation/cursor-collection.md](../../documentation/cursor-collection.md):
+Każde nowe zadanie realizuj zgodnie z workflow opisanym w [AGENTS.md](/third-party/github-collections/AGENTS.md) i [documentation/cursor-collection.md](/third-party/github-collections/documentation/cursor-collection.md):
 
 1. **Implement** — dołącz `@eversis-implement` i opis zadania; agent przeprowadzi research → plan → kod z ludzkimi bramkami zatwierdzenia.
 2. **Review** — po implementacji dołącz `@eversis-review` w celu ustrukturyzowanego przeglądu kodu.
 
 ### Dostępne reguły (`.cursor/rules/`)
 
-| Plik | Kiedy aktywna |
-| ---- | ------------- |
-| `eversis-agent-core.mdc` | zawsze (`alwaysApply: true`) — bazowe zachowania agenta |
-| `eversis-project-stack.mdc` | zawsze — stack Bun/TypeScript, komendy i konwencje tego repo |
-| `eversis-engineering-manager.mdc` | na żądanie `@` — przy użyciu `@eversis-implement` |
-| `eversis-code-reviewer.mdc` | na żądanie `@` — przy użyciu `@eversis-review` |
-| `eversis-testing-and-terminal.mdc` | na żądanie `@` — dyscyplina testowania i terminala |
-| `use-bun-instead-of-node-vite-npm-pnpm.mdc` | automatycznie dla `tasks/**` i `lessons/**` |
+| Plik                                        | Kiedy aktywna                                                |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `eversis-agent-core.mdc`                    | zawsze (`alwaysApply: true`) — bazowe zachowania agenta      |
+| `eversis-project-stack.mdc`                 | zawsze — stack Bun/TypeScript, komendy i konwencje tego repo |
+| `eversis-engineering-manager.mdc`           | na żądanie `@` — przy użyciu `@eversis-implement`            |
+| `eversis-code-reviewer.mdc`                 | na żądanie `@` — przy użyciu `@eversis-review`               |
+| `eversis-testing-and-terminal.mdc`          | na żądanie `@` — dyscyplina testowania i terminala           |
+| `use-bun-instead-of-node-vite-npm-pnpm.mdc` | automatycznie dla `tasks/**` i `lessons/**`                  |
 
 ### Dostępne prompty (`.cursor/prompts/`, dołącz przez `@`)
 
-| Prompt | Zastosowanie |
-| ------ | ------------ |
-| `@eversis-implement` | Research → plan → implementacja nowego zadania kursowego |
-| `@eversis-review` | Przegląd kodu z PASS / BLOCKER / SUGGESTION |
-| `@eversis-review-codebase` | Ogólny przegląd zdrowia bazy kodu |
-| `@eversis-analyze-materials` | Analiza materiałów kursu → strukturyzowane notatki |
-| `@eversis-create-custom-skill` | Tworzenie nowego skill package w `.cursor/skills/` |
+| Prompt                         | Zastosowanie                                             |
+| ------------------------------ | -------------------------------------------------------- |
+| `@eversis-implement`           | Research → plan → implementacja nowego zadania kursowego |
+| `@eversis-review`              | Przegląd kodu z PASS / BLOCKER / SUGGESTION              |
+| `@eversis-review-codebase`     | Ogólny przegląd zdrowia bazy kodu                        |
+| `@eversis-analyze-materials`   | Analiza materiałów kursu → strukturyzowane notatki       |
+| `@eversis-create-custom-skill` | Tworzenie nowego skill package w `.cursor/skills/`       |
 
 ### Skills (`.cursor/skills/`, przez MCP `eversis-collections`)
 

@@ -34,7 +34,7 @@ Zgodnie z konwencją monorepo **Cursor Collections** rozdzielamy:
 - **Publiczny prompt** — `.cursor/prompts/public/eversis-*.md`: treść **wykonywalnego workflow** (frontmatter Docusaurus + kroki SOP). W Cursorze **`@` + stem pliku** (np. `@eversis-ba-docs-planner`) zwykle rozwiązuje **właśnie ten prompt**.
 - **Reguła roli** — `.cursor/rules/eversis-*.mdc`: **kim jest agent**, granice, zachowanie przy narzędziach MCP; dołączana na żądanie (**`@`** do pliku `.mdc` lub wybór z pickera), często z `alwaysApply: false`.
 
-W praktyce dla tego workflow **obydwa artefakty są normatywne**: prompt uruchamia tor; reguła utrwala rolę i spójność z frameworkiem. Jeśli `@` nie łączy obu w jednej sesji, użytkownik **jawnie dołącza** drugi plik (pełna ścieżka pod `.cursor/…`), tak jak w [AGENTS.md](../../../AGENTS.md).
+W praktyce dla tego workflow **obydwa artefakty są normatywne**: prompt uruchamia tor; reguła utrwala rolę i spójność z frameworkiem. Jeśli `@` nie łączy obu w jednej sesji, użytkownik **jawnie dołącza** drugi plik (pełna ścieżka pod `.cursor/…`), tak jak w [AGENTS.md](/third-party/github-collections/../AGENTS.md).
 
 ### Role 1: Główny Analityk (Planner)
 
