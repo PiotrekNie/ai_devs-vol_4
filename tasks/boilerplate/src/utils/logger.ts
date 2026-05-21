@@ -6,7 +6,7 @@
  *   [MYŚL]   — model's reasoning / thought content
  *   [AKCJA]  — tool dispatch (what the agent is doing)
  *   [WYNIK]  — tool result (what came back)
- *   [SYSTEM] — lifecycle events: bootstrap, errors, guards
+ *   [PAMIĘĆ] — Observational Memory (observer/reflector/seal)
  *
  * Also exports MCP_LABEL / NATIVE_LABEL constants and aliases that
  * match the naming convention used across existing tasks.
@@ -70,6 +70,18 @@ export const logSystem = (
   console.error(
     `${c.dim}[${ts}]${c.reset} ${c.magenta}[SYSTEM]${c.reset} ${c.bold}${step}${c.reset}${extra}`,
   );
+};
+
+/** [PAMIĘĆ] Observational Memory lifecycle (observer, reflector, seal). */
+export const logMemory = (
+  phase: string,
+  detail?: Record<string, unknown>,
+): void => {
+  const extra =
+    detail && Object.keys(detail).length > 0
+      ? ` ${c.dim}${JSON.stringify(detail)}${c.reset}`
+      : "";
+  console.log(`${c.cyan}[PAMIĘĆ]${c.reset} ${phase}${extra}`);
 };
 
 /** Tool call error. */

@@ -53,6 +53,12 @@ All keys are optional unless noted; the defaults are shown in [.env.example](./.
 | `AGENT_RETRY_BASE_DELAY_MS`              | No                  | `1000`                          | Base retry delay for 429/503 errors              |
 | `AGENT_MAX_RETRY_ATTEMPTS`               | No                  | `5`                             | Max retry attempts per call                      |
 | `HUB_VERIFY_URL`                         | No                  | `https://hub.ag3nts.org/verify` | Hub verification endpoint                        |
+| `OBSERVER_THRESHOLD_TOKENS`              | No                  | `30000`                         | OM: seal conversation head when tail exceeds this |
+| `REFLECTOR_THRESHOLD_TOKENS`             | No                  | `60000`                         | OM: run Reflector when observations exceed this  |
+| `REFLECTION_TARGET_TOKENS`                 | No                  | `20000`                         | OM: Reflector target size + hysteresis           |
+| `OM_MODEL`                               | No                  | `gpt-4o-mini`                   | Model for Observer / Reflector passes            |
+| `OM_PERSIST_DIR`                         | No                  | *(empty)*                       | Debug logs (`observer-NNN.md`); empty = off       |
+| `OM_CALIBRATION_MIN_ACTUAL_TOKENS`       | No                  | `500`                           | Min API tokens before usage calibration applies  |
 
 ### 3. Run the boilerplate tests
 
@@ -190,7 +196,8 @@ tasks/boilerplate/
     │   ├── ai.ts                  # AIAdapter interface + OpenAI Responses API impl + retry
     │   ├── agent.ts               # createAgent() — ReAct loop, MAX_ITERATIONS guard
     │   ├── planning.ts            # Turn 0 planning + Working plan injection
-    │   └── memory.ts              # MemoryHooks interface + no-op default (Observer/Reflector scaffold)
+    │   ├── memory.ts              # MemoryHooks interface + noop default
+    │   └── observational_memory/  # createObservationalMemoryHooks (S02E05 OM)
     ├── mcp/
     │   ├── client.ts              # createMcpClient, listMcpTools, callMcpTool, mcpToolsToOpenAI
     │   └── server.ts              # createBoilerplateMcpServer() — registers 4 default MCP tools
@@ -204,36 +211,64 @@ tasks/boilerplate/
     │       ├── read_file.ts       # read_file — chunked local file reader
     │       └── analyze_image_vision.ts  # analyze_image_vision — vision model image analysis
     ├── prompts/
-    │   └── system.md              # Default system prompt template (override per task)
+    │   ├── system.md              # Default system prompt template
+    │   ├── planning_turn.md       # Turn 0 planning instructions
+    │   ├── observer.md            # Observer system prompt (OM)
+    │   └── reflector.md           # Reflector system prompt (OM)
     ├── types/
     │   └── index.ts               # Zod schemas + TS types: Message, ToolDefinition, ModelResponse
     └── utils/
-        └── logger.ts              # Tagged logger: [MYŚL] [AKCJA] [WYNIK] [SYSTEM]
+        └── logger.ts              # Tagged logger: [MYŚL] [AKCJA] [WYNIK] [PAMIĘĆ] [SYSTEM]
 ```
 
 ---
 
-## Observer/Reflector memory extension
+## Observational Memory (S02E05)
 
-`src/agent/memory.ts` exposes a `MemoryHooks` interface with two lifecycle methods: `beforeTurn` (called before each LLM call) and `afterTurn` (called after all tool results are appended). The default export `noopMemoryHooks` is a no-op implementation.
-
-To implement full Observer/Reflector (S02E05 pattern), extend `MemoryHooks`:
+Mastra **Observational Memory** — Observer seals old conversation into XML observations; Reflector compresses when observations grow too large. Opt-in via factory (default agent behaviour unchanged).
 
 ```typescript
-import type { MemoryHooks } from "@ai-devs/agent-boilerplate/src/agent/memory.js";
+import {
+  createAgent,
+  createObservationalMemoryHooks,
+} from "@ai-devs/agent-boilerplate";
 
-const myMemory: MemoryHooks = {
-  async beforeTurn({ conversation, instructions }) {
-    // Seal old items, append journal to instructions
-    return {
-      conversation: trimmedConversation,
-      instructions: injectedInstructions,
-    };
-  },
-  async afterTurn() {
-    // Optional: post-turn bookkeeping
-  },
-};
+const memory = createObservationalMemoryHooks({
+  // optional: persistDir: "./workspace/memory",
+  // optional: enableCalibration: true,
+});
+
+const agent = createAgent({
+  ai,
+  instructions,
+  tools,
+  handlers,
+  memory,
+});
 ```
 
-Reference implementation: `tasks/s02e03/src/observationalMemory.ts`.
+**Context layout:**
+
+```text
+instructions = base prompt + <observations> … </observations>
+input        = recent conversation tail (raw)
+```
+
+**Token estimation (dual):**
+
+| Use | Estimator |
+| --- | --- |
+| Observer threshold (`OBSERVER_THRESHOLD_TOKENS`) | Raw `chars / 4` (stable) |
+| Observation size / Reflector | Calibrated from API `usage` when enough samples |
+
+Set `enableCalibration: false` for raw-only behaviour. Reuse the **same** factory instance across `processConversationTurn` calls to retain observation state.
+
+**Coexistence:** `## Working plan` (planning phase) and domain journals (e.g. s02e04 mailbox) stay in `instructions`; OM appendix is injected separately — do not strip plan markers in custom hooks.
+
+Logs: `[PAMIĘĆ]` for observer/reflector/seal events. Prompts: `src/prompts/observer.md`, `reflector.md`.
+
+---
+
+## MemoryHooks (custom / no-op)
+
+`noopMemoryHooks` is the default when `memory` is omitted. For custom memory, implement `MemoryHooks` (`beforeTurn` / `afterTurn`) — see `src/agent/memory.ts`.

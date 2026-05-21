@@ -38,6 +38,18 @@ export type {
   AfterTurnContext,
 } from "./src/agent/memory.js";
 
+// Observational Memory (S02E05)
+export {
+  createObservationalMemoryHooks,
+  processObservationalMemory,
+  flushObservationalMemory,
+} from "./src/agent/observational_memory/index.js";
+export type {
+  ObservationalMemoryHooksOptions,
+  MemoryState,
+  ObservationalMemoryConfig,
+} from "./src/agent/observational_memory/index.js";
+
 // Agent loop
 export { createAgent } from "./src/agent/agent.js";
 export type { ToolHandler, AgentConfig } from "./src/agent/agent.js";

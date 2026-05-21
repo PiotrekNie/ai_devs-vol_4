@@ -32,7 +32,7 @@ import {
   logSystem,
   logQuery,
 } from "../utils/logger.js";
-import { MAX_ITERATIONS, MAX_TOOL_OUTPUT_CHARS } from "../../config.js";
+import { MAX_ITERATIONS, MAX_TOOL_OUTPUT_CHARS, OM_TOKEN_SAFETY_MARGIN } from "../../config.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -74,6 +74,28 @@ function truncateOutput(s: string, maxChars: number): string {
     `…[truncated ${s.length - maxChars} chars; ` +
     `raise AGENT_MAX_TOOL_OUTPUT_CHARS or narrow tool result]`
   );
+}
+
+function estimateTurnTokens(
+  conversation: unknown[],
+  instructions: string,
+): number {
+  const raw = Math.ceil(
+    (JSON.stringify(conversation).length + instructions.length) /
+      TOKEN_CHARS_PER_TOKEN,
+  );
+  return Math.ceil(raw * OM_TOKEN_SAFETY_MARGIN);
+}
+
+const TOKEN_CHARS_PER_TOKEN = 4;
+
+async function callAfterTurn(
+  memory: MemoryHooks | undefined,
+  ctx: Parameters<NonNullable<MemoryHooks["afterTurn"]>>[0],
+): Promise<void> {
+  if (memory?.afterTurn) {
+    await memory.afterTurn(ctx);
+  }
 }
 
 async function dispatchToolCall(
@@ -150,6 +172,11 @@ export function createAgent({
         currentInstructions = prep.instructions;
       }
 
+      const estimatedTokens = estimateTurnTokens(
+        conversation,
+        currentInstructions,
+      );
+
       const response = await ai.generateResponse(
         conversation,
         tools,
@@ -168,7 +195,12 @@ export function createAgent({
         logResponse(text);
 
         if (memory?.afterTurn) {
-          await memory.afterTurn({ conversation, iteration });
+          await callAfterTurn(memory, {
+            conversation,
+            iteration,
+            terminal: true,
+            lastResponse: { estimatedTokens, usage: response.usage },
+          });
         }
 
         return { text, nextConversation: conversation };
@@ -205,7 +237,12 @@ export function createAgent({
       if (finishSignal) {
         logSystem("finish_task called", { answer: finishSignal.finalAnswer });
         if (memory?.afterTurn) {
-          await memory.afterTurn({ conversation, iteration });
+          await callAfterTurn(memory, {
+            conversation,
+            iteration,
+            terminal: true,
+            lastResponse: { estimatedTokens, usage: response.usage },
+          });
         }
         return {
           text: finishSignal.finalAnswer,
@@ -213,13 +250,20 @@ export function createAgent({
         };
       }
 
-      if (memory?.afterTurn) {
-        await memory.afterTurn({ conversation, iteration });
-      }
+      await callAfterTurn(memory, {
+        conversation,
+        iteration,
+        lastResponse: { estimatedTokens, usage: response.usage },
+      });
     }
 
     const guardMsg = `MAX_ITERATIONS (${maxIterations}) reached without a final answer.`;
     logSystem(guardMsg);
+    await callAfterTurn(memory, {
+      conversation,
+      iteration: maxIterations - 1,
+      terminal: true,
+    });
     return { text: guardMsg, nextConversation: conversation };
   }
 

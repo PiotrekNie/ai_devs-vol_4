@@ -127,6 +127,26 @@ function compactOutputItems(output: unknown[] | undefined): unknown[] {
   });
 }
 
+function parseTokenUsage(data: Record<string, unknown>): ModelResponse["usage"] {
+  const usage = data["usage"];
+  if (typeof usage !== "object" || usage === null) return undefined;
+  const u = usage as Record<string, unknown>;
+  const input =
+    typeof u.input_tokens === "number"
+      ? u.input_tokens
+      : typeof u.prompt_tokens === "number"
+        ? u.prompt_tokens
+        : undefined;
+  const output =
+    typeof u.output_tokens === "number"
+      ? u.output_tokens
+      : typeof u.completion_tokens === "number"
+        ? u.completion_tokens
+        : undefined;
+  if (input === undefined || output === undefined) return undefined;
+  return { inputTokens: input, outputTokens: output };
+}
+
 function extractToolCalls(output: unknown[] | undefined): ToolCall[] {
   if (!Array.isArray(output)) return [];
   return output.filter((item): item is ToolCall => {
@@ -151,6 +171,7 @@ export type ChatParams = {
   instructions?: string;
   reasoning?: Record<string, unknown>;
   maxOutputTokens?: number;
+  temperature?: number;
 };
 
 export type ChatOptions = {
@@ -197,6 +218,9 @@ export async function chat(
   }
   if (params.maxOutputTokens !== undefined && params.maxOutputTokens > 0) {
     body["max_output_tokens"] = params.maxOutputTokens;
+  }
+  if (params.temperature !== undefined) {
+    body["temperature"] = params.temperature;
   }
 
   const delayOverride = options.retryDelayBaseMs;
@@ -248,8 +272,9 @@ export async function chat(
   const toolCalls = extractToolCalls(output);
   const rawOutputItems = compactOutputItems(output);
   const content = extractAssistantText(data);
+  const usage = parseTokenUsage(data);
 
-  return { content, toolCalls, rawOutputItems };
+  return { content, toolCalls, rawOutputItems, usage };
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { createAgent } from "./agent.js";
+import { createObservationalMemoryHooks } from "./observational_memory/index.js";
 import { FinishTaskSignal } from "../tools/native/finish_task.js";
 import type { AIAdapter } from "./ai.js";
 import type { ModelResponse } from "../types/index.js";
@@ -280,5 +281,47 @@ describe("createAgent — processConversationTurn", () => {
 
     const { text } = await agent.processConversationTurn(null, "Hello.");
     expect(text).toBe("Fresh start.");
+  });
+});
+
+// ── Observational Memory integration ───────────────────────────────────────────
+
+describe("createAgent — observational memory", () => {
+  it("injects observations when threshold exceeded", async () => {
+    let omCalls = 0;
+    const memory = createObservationalMemoryHooks({
+      observationThresholdTokens: 10,
+      enableCalibration: false,
+      chatFn: async () => {
+        omCalls++;
+        return {
+          content:
+            "<observations>\n* [user] sealed from long history\n</observations>",
+          toolCalls: [],
+          rawOutputItems: [],
+        };
+      },
+    });
+
+    const captured: { instructions?: string } = {};
+    const agent = createAgent({
+      ai: {
+        async generateResponse(_msgs, _tools, instructions) {
+          captured.instructions = instructions;
+          return textResponse("done");
+        },
+      },
+      instructions: "Base system.",
+      tools: [],
+      handlers: {},
+      memory,
+    });
+
+    const longQuery = "data ".repeat(500);
+    await agent.processQuery(longQuery);
+
+    expect(omCalls).toBeGreaterThan(0);
+    expect(captured.instructions).toContain("<observations>");
+    expect(captured.instructions).toContain("sealed from long history");
   });
 });

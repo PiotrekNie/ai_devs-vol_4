@@ -72,3 +72,33 @@ describe("fetchWithRetry", () => {
     expect(calls).toBe(1);
   });
 });
+
+describe("chat usage parsing", () => {
+  afterEach(() => {
+    globalThis.fetch = global.fetch;
+  });
+
+  it("returns usage from Responses API body", async () => {
+    globalThis.fetch = mock(async () =>
+      new Response(
+        JSON.stringify({
+          output: [
+            {
+              type: "message",
+              content: [{ type: "output_text", text: "hi" }],
+            },
+          ],
+          usage: { input_tokens: 10, output_tokens: 5 },
+        }),
+        { status: 200 },
+      ),
+    ) as unknown as typeof fetch;
+
+    const { chat } = await import("./ai.js");
+    const result = await chat(
+      { model: "test", input: [{ role: "user", content: "x" }] },
+      { retryDelayBaseMs: 0 },
+    );
+    expect(result.usage).toEqual({ inputTokens: 10, outputTokens: 5 });
+  });
+});

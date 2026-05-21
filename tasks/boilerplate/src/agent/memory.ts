@@ -4,33 +4,28 @@
  * This module defines the MemoryHooks interface that the agent loop calls on
  * every iteration. The default export is a no-op implementation.
  *
- * ── Extension point ──
- * To implement full Observer/Reflector memory (introduced in S02E05), create
- * an object that satisfies MemoryHooks:
+ * ── Full Observational Memory (S02E05) ──
+ * Use `createObservationalMemoryHooks()` from `./observational_memory/index.js`:
  *
- *   import type { MemoryHooks } from "@ai-devs/agent-boilerplate/src/agent/memory.js";
+ *   import { createObservationalMemoryHooks } from "@ai-devs/agent-boilerplate";
  *
- *   const observationalMemory: MemoryHooks = {
- *     async beforeTurn({ conversation, instructions }) {
- *       // 1. Check if conversation exceeds OBSERVER_THRESHOLD_TOKENS.
- *       // 2. Seal oldest items → call LLM to summarise into journal file.
- *       // 3. If journal exceeds REFLECTOR_THRESHOLD_TOKENS, compress it (Reflector).
- *       // 4. Inject journal block into instructions.
- *       return { conversation: trimmed, instructions: withJournal };
- *     },
- *     async afterTurn(_ctx) {
- *       // Optional post-turn bookkeeping.
- *     },
- *   };
+ *   createAgent({
+ *     memory: createObservationalMemoryHooks({ persistDir: "./workspace/memory" }),
+ *     ...
+ *   });
  *
- * Reference implementation: tasks/s02e03/src/observationalMemory.ts
+ * Layers (do not conflate):
+ * - **Observational Memory** — sealed conversation history as XML observations.
+ * - **`## Working plan`** (enablePlanningPhase) — procedural; lives in instructions.
+ * - **Domain journals** (e.g. s02e04 mailbox_memory) — declarative facts for a task.
  *
- * When enablePlanningPhase is on, instructions may contain a `## Working plan` block
- * (procedural). Do not strip that marker in beforeTurn — keep plan separate from
- * declarative fact journals (e.g. mailbox working memory).
+ * `beforeTurn` must not strip `## Working plan` or domain journal blocks when
+ * injecting observations (use `stripObservationAppendix` only for OM appendix).
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+import type { ModelResponse } from "../types/index.js";
 
 export type BeforeTurnContext = {
   /** Current conversation items (Responses API input format). */
@@ -53,6 +48,13 @@ export type AfterTurnContext = {
   conversation: unknown[];
   /** Loop iteration that just completed. */
   iteration: number;
+  /** Set when the run ends (final answer, finish_task, or MAX_ITERATIONS guard). */
+  terminal?: boolean;
+  /** Main agent LLM call metadata for token calibration (Observational Memory). */
+  lastResponse?: {
+    estimatedTokens: number;
+    usage?: ModelResponse["usage"];
+  };
 };
 
 /**

@@ -74,6 +74,11 @@ export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
 // ── AIAdapter types ───────────────────────────────────────────────────────────
 
 /** Parsed result of a single LLM call. */
+export const TokenUsageSchema = z.object({
+  inputTokens: z.number(),
+  outputTokens: z.number(),
+});
+
 export const ModelResponseSchema = z.object({
   /** Text extracted from the model's output message (null if only tool calls). */
   content: z.string().nullable(),
@@ -84,7 +89,10 @@ export const ModelResponseSchema = z.object({
    * stripped). Appended to the conversation before the next call.
    */
   rawOutputItems: z.array(z.unknown()),
+  /** Token usage reported by the API (when present). */
+  usage: TokenUsageSchema.optional(),
 });
+export type TokenUsage = z.infer<typeof TokenUsageSchema>;
 export type ModelResponse = z.infer<typeof ModelResponseSchema>;
 
 // ── MCP response shape ────────────────────────────────────────────────────────

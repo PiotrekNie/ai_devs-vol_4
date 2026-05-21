@@ -86,3 +86,62 @@ export const REFLECTOR_THRESHOLD_TOKENS = posInt(
   "REFLECTOR_THRESHOLD_TOKENS",
   60_000,
 );
+
+/** Target observation size after Reflector + hysteresis growth trigger. */
+export const REFLECTION_TARGET_TOKENS = posInt(
+  "REFLECTION_TARGET_TOKENS",
+  20_000,
+);
+
+/** Model for Observer / Reflector passes. */
+export const OM_MODEL = process.env["OM_MODEL"]?.trim() ?? "gpt-4o-mini";
+
+/** Optional directory for observer/reflector debug logs (empty = disabled). */
+export const OM_PERSIST_DIR = process.env["OM_PERSIST_DIR"]?.trim() ?? "";
+
+export const OM_OBSERVER_MAX_OUTPUT_TOKENS = posInt(
+  "OM_OBSERVER_MAX_OUTPUT_TOKENS",
+  8192,
+);
+
+export const OM_REFLECTOR_MAX_OUTPUT_TOKENS = posInt(
+  "OM_REFLECTOR_MAX_OUTPUT_TOKENS",
+  10_000,
+);
+
+function posFloat(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+/** Fraction of observer threshold reserved as raw tail (default 0.3). */
+export const OM_TAIL_RATIO = posFloat("OM_TAIL_RATIO", 0.3);
+
+/** Minimum tail token budget when splitting conversation for Observer. */
+export const OM_MIN_TAIL_TOKENS = posInt("OM_MIN_TAIL_TOKENS", 120);
+
+/** Max chars per text section in Observer input serialization. */
+export const OBSERVER_MAX_SECTION_CHARS = posInt(
+  "OBSERVER_MAX_SECTION_CHARS",
+  6_000,
+);
+
+/** Max chars per tool payload in Observer input serialization. */
+export const OBSERVER_MAX_TOOL_PAYLOAD_CHARS = posInt(
+  "OBSERVER_MAX_TOOL_PAYLOAD_CHARS",
+  3_000,
+);
+
+/** Chars per token heuristic (matches lesson / Mastra OM). */
+export const TOKEN_CHARS_PER_TOKEN = 4;
+
+/** Safety margin applied before recording estimated usage for calibration. */
+export const OM_TOKEN_SAFETY_MARGIN = posFloat("OM_TOKEN_SAFETY_MARGIN", 1.2);
+
+/** Min cumulative actual API tokens before calibration ratio applies. */
+export const OM_CALIBRATION_MIN_ACTUAL_TOKENS = posInt(
+  "OM_CALIBRATION_MIN_ACTUAL_TOKENS",
+  500,
+);

@@ -97,13 +97,26 @@ type ModelResponse = {
 
 6. Jeśli wykonano narzędzie `finish_task` -> przerwij pętlę, zwróć wynik.
 
-### 4.3. Zarządzanie Pamięcią (`src/agent/memory.ts`)
+### 4.3. Zarządzanie Pamięcią (`src/agent/memory.ts` + `observational_memory/`)
 
-**Odpowiedzialność:** Kompresja historii konwersacji w przypadku długich sesji (szczególnie operacje na plikach/logach).
-**Mechanika (Zgodna z lekcją S02E05):**
+**Odpowiedzialność:** Kompresja historii konwersacji w długich sesjach (operacje na plikach, wiele tur ReAct).
 
-- **Observer:** Po każdej turze (lub przekroczeniu limitu X tokenów), agent pobiera najstarsze wiadomości i streszcza je (tworzy wpis do dziennika).
-- **Reflector:** Kiedy "Dziennik Zdarzeń" rośnie za bardzo, wywoływany jest model w celu jego skompresowania do spójnych wniosków.
+**Implementacja:** `createObservationalMemoryHooks()` (opt-in). Domyślnie `noopMemoryHooks`.
+
+**Layout kontekstu:**
+
+```text
+instructions = prompt + <observations> … </observations>
+input        = ostatni surowy ogon konwersacji
+```
+
+**Observer:** Gdy szacunek tokenów ogonu ≥ `OBSERVER_THRESHOLD_TOKENS`, najstarsza część jest sealowana przez LLM do obserwacji XML (tagi `[user]`, `[tool:name]`, priorytety). Surowy ogon zostaje w `input`.
+
+**Reflector:** Gdy obserwacje ≥ `REFLECTOR_THRESHOLD_TOKENS` i wzrost od ostatniej refleksji ≥ `REFLECTION_TARGET_TOKENS`, LLM kompresuje cały blok obserwacji.
+
+**Kalibracja tokenów:** Progi Observer liczone **raw** (`chars/4`). Rozmiar obserwacji i Reflector używają ratio z API `usage` po zebraniu próbek (`OM_CALIBRATION_MIN_ACTUAL_TOKENS`).
+
+**Persystencja:** Opcjonalna (`OM_PERSIST_DIR`) — pliki `observer-NNN.md`, `reflector-NNN.md` do debugu.
 
 ---
 
@@ -223,7 +236,7 @@ Przy użyciu Cursora proces wdrażania na podstawie tej specyfikacji powinien pr
 
 **KROK 6: Pamięć (Wersja edukacyjna)**
 
-- Przygotowanie pustej, ale zdefiniowanej w architekturze struktury dla modułu `memory.ts`. Wdrożenie algorytmów Observer/Reflector będzie realizowane w miarę postępów w S02E05.
+- Moduł `observational_memory/` z `createObservationalMemoryHooks()` — Observer/Reflector zgodnie z lekcją S02E05 (wdrożone).
 
 **KROK 7: Testy "Hello World"**
 
