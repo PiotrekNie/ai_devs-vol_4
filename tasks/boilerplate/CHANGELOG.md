@@ -26,6 +26,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **`submit_to_hub` answer schema** — `answer` object values may include **arrays of strings** (e.g. drone `instructions`); tool description clarifies `apikey` is injected from env.
 - **Responses API tool schemas** — `submit_to_hub` no longer uses `z.unknown()` for `answer` (invalid JSON Schema / HTTP 400). `mcpToolsToOpenAI` uses `sanitizeToolJsonSchema` + `strict: false` so `http_request` `body` (`z.record`) and optional fields stay valid.
 - **`chat()` errors** — provider error responses now append a short JSON body hint for debugging.
 

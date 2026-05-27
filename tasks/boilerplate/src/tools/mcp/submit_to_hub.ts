@@ -15,7 +15,7 @@ import type { McpToolResponse } from "../../types/index.js";
 
 const FLAG_PATTERN = /\{FLG:[^}]+\}/;
 
-/** JSON-serializable hub answer (no z.unknown — Responses API rejects untyped properties). */
+/** JSON-serializable hub answer scalar (no z.unknown — Responses API rejects untyped properties). */
 const hubAnswerLeaf = z.union([
   z.string(),
   z.number(),
@@ -23,22 +23,31 @@ const hubAnswerLeaf = z.union([
   z.null(),
 ]);
 
+/** Values allowed in hub `answer` objects — scalars plus string arrays (e.g. drone `instructions`). */
+const hubAnswerValue = z.union([
+  hubAnswerLeaf,
+  z.array(z.string()),
+  z.array(hubAnswerLeaf),
+]);
+
 export const submitToHubInputSchema = z.object({
   task_name: z
     .string()
     .describe(
-      "The task identifier used by the hub (e.g. 's02e01', 'json'). " +
-        "Matches the task field in the hub request body.",
+      "The task identifier used by the hub (e.g. 'drone', 'mailbox'). " +
+        "Matches the `task` field in the hub request body. Do not pass `apikey` — " +
+        "the tool injects HUB_API_KEY automatically.",
     ),
   answer: z
     .union([
-      z.record(z.string(), hubAnswerLeaf),
+      z.record(z.string(), hubAnswerValue),
       z.array(hubAnswerLeaf),
       hubAnswerLeaf,
     ])
     .describe(
-      "Payload for the hub `answer` field. Use an object for typical tasks " +
-        "(string values, numbers, booleans, or null per key).",
+      "Payload for the hub `answer` field only (not the full POST body). " +
+        "Object values: strings, numbers, booleans, null, or arrays of strings " +
+        "(e.g. drone: { instructions: [\"selfCheck\", \"set(3,4)\"] }).",
     ),
 });
 export type SubmitToHubInput = z.infer<typeof submitToHubInputSchema>;

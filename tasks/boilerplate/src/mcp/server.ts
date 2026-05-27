@@ -50,8 +50,8 @@ export function createBoilerplateMcpServer(): McpServer {
     {
       description:
         "Submit an answer to the AI Devs course verification hub. " +
-        "Requires HUB_API_KEY. Returns { ok, status, data, flag? }. " +
-        "Scans the response for a {FLG:...} flag pattern.",
+        "Pass task_name + answer only — apikey is injected from HUB_API_KEY env. " +
+        "Returns { ok, status, data, flag? }. Scans the response for a {FLG:...} flag.",
       inputSchema: submitToHubInputSchema,
     },
     executeSubmitToHub,
