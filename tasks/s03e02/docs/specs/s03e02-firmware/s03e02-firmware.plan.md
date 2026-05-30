@@ -132,7 +132,7 @@
 - [x] Root `README.md` — wpis `s03e02`.
 - [x] `CHANGELOG.md` — wpis `[Unreleased]`.
 - [x] Research zaktualizowany (status Implemented / w toku).
-- [ ] Manual E2E: `bun run start` → hub `{FLG:...}` (wymaga `.env`, ~10–20 min).
+- [x] Manual E2E: `bun run start` → hub `{FLG:...}` (wymaga `.env`, ~10–20 min).
 
 ---
 
@@ -273,8 +273,8 @@ createAgent({
 
 | ID | Typ | Zadanie | DoD |
 | --- | --- | --- | --- |
-| H1 | [REUSE] | Manual: `cd tasks/s03e02 && bun run start` z `tasks/.env` | ⏳ pending |
-| H2 | [REUSE] | Langfuse trace review (jeśli klucze) | ⏳ pending |
+| H1 | [REUSE] | Manual: `cd tasks/s03e02 && bun run start` z `tasks/.env` | ✅ `{FLG:CANTTOUCHTHIS}` (~40s, 2026-05-30) |
+| H2 | [REUSE] | Langfuse trace review (jeśli klucze) | ⏳ optional |
 
 **Uwaga:** H1 wymaga aktywnego klucza hub + model reasoning; czas ~10–20 min. Nie blokuje merge testów jednostkowych.
 
@@ -337,3 +337,4 @@ Po każdej fazie implementujący aktualizuje checkboxy w §8 i Changelog poniże
 | --- | --- |
 | 2026-05-30 | Plan początkowy — firmware epizod; human gate: README/CHANGELOG, memory S03E01, Langfuse on |
 | 2026-05-30 | Fazy A–G zaimplementowane; 8 testów pass, tsc clean; H1/H2 E2E pending manual |
+| 2026-05-30 | H1 E2E PASS: `{FLG:CANTTOUCHTHIS}`, ~40s, 11 shell/submit tur |
