@@ -36,6 +36,8 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s02e01` | `categorize` — token-budget prompt classification with self-repair |
 | `s02e02` | `electricity` — 3×3 tile board solver (vision → plan → rotate) |
 | `s02e03` | `failurecode` — ReAct agent with MCP tools, Observer/Reflector memory |
+| `s03e01` | `evaluation` — sensor anomaly scan + batch classify + hub verify |
+| `s03e02` | `firmware` — ReAct agent + remote shell VM (S03E02) |
 
 ## Clone (submodules)
 

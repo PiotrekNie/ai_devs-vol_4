@@ -6,6 +6,8 @@ import {
   buildPlanningInstructions,
   collectToolNames,
   resolveEnablePlanningPhase,
+  runPlanningTurn,
+  PLANNING_EXECUTION_NUDGE,
 } from "./planning.js";
 
 describe("planning helpers", () => {
@@ -53,5 +55,35 @@ describe("planning helpers", () => {
     expect(resolveEnablePlanningPhase(true)).toBe(true);
     if (prev === undefined) delete process.env.AGENT_ENABLE_PLANNING;
     else process.env.AGENT_ENABLE_PLANNING = prev;
+  });
+
+  it("runPlanningTurn ends conversation with user nudge for turn 1+", async () => {
+    const adapter = {
+      generateResponse: async () => ({
+        content: "Step 1: help",
+        toolCalls: [],
+        rawOutputItems: [
+          {
+            type: "message",
+            role: "assistant",
+            content: [{ type: "output_text", text: "Step 1: help" }],
+          },
+        ],
+      }),
+    };
+
+    const { conversationAfterPlan } = await runPlanningTurn({
+      ai: adapter,
+      conversation: [{ role: "user", content: "Plan firmware." }],
+      instructions: "Episode rules",
+      tools: [{ type: "function", name: "shell_exec" }],
+    });
+
+    const last = conversationAfterPlan[conversationAfterPlan.length - 1] as {
+      role?: string;
+      content?: string;
+    };
+    expect(last.role).toBe("user");
+    expect(last.content).toBe(PLANNING_EXECUTION_NUDGE);
   });
 });

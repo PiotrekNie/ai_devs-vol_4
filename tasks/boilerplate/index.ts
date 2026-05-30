@@ -23,6 +23,7 @@ export {
   injectWorkingPlan,
   buildPlanningInstructions,
   runPlanningTurn,
+  PLANNING_EXECUTION_NUDGE,
 } from "./src/agent/planning.js";
 
 // AI adapter

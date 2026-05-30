@@ -11,6 +11,10 @@ import { logPlan, logSystem } from "../utils/logger.js";
 
 export const WORKING_PLAN_MARKER = "\n\n---\n## Working plan";
 
+/** Appended after turn 0 so the next API call ends with a user message (required by some providers). */
+export const PLANNING_EXECUTION_NUDGE =
+  "Turn 1+: Execute the working plan above using tools now. Proceed step by step.";
+
 const PLANNING_PROMPT_PATH = join(
   dirname(fileURLToPath(import.meta.url)),
   "../prompts/planning_turn.md",
@@ -139,6 +143,11 @@ export async function runPlanningTurn(args: {
       },
     ];
   }
+
+  conversationAfterPlan = [
+    ...conversationAfterPlan,
+    { role: "user", content: PLANNING_EXECUTION_NUDGE },
+  ];
 
   return { instructionsWithPlan, conversationAfterPlan };
 }
