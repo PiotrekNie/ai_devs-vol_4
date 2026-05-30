@@ -1,0 +1,10 @@
+{
+  "sensor_type": "temperature",
+  "timestamp": 1773996414,
+  "temperature_K": 612,
+  "pressure_bar": 0,
+  "water_level_meters": 0,
+  "voltage_supply_v": 230,
+  "humidity_percent": 0,
+  "operator_notes": "Voltage reading included by mistake on temperature sensor."
+}
