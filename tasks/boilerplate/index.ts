@@ -54,6 +54,21 @@ export type {
 export { createAgent } from "./src/agent/agent.js";
 export type { ToolHandler, AgentConfig } from "./src/agent/agent.js";
 
+// Tool discovery (S02E05-inspired, opt-in)
+export {
+  setupToolDiscovery,
+  META_TOOL_NAMES,
+  DEFAULT_CORE_TOOL_NAMES,
+  META_TOOL_DEFINITIONS,
+  buildToolCatalog,
+  filterToolsForApi,
+  createToolDiscoveryState,
+} from "./src/agent/tool_discovery/index.js";
+export type {
+  ToolDiscoveryOptions,
+  ToolDiscoveryRuntime,
+} from "./src/agent/tool_discovery/index.js";
+
 // MCP
 export {
   createMcpClient,

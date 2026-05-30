@@ -286,6 +286,99 @@ describe("createAgent — processConversationTurn", () => {
 
 // ── Observational Memory integration ───────────────────────────────────────────
 
+function openAiToolDef(
+  name: string,
+  description = "",
+): { type: "function"; name: string; description: string; parameters: Record<string, unknown> } {
+  return {
+    type: "function",
+    name,
+    description,
+    parameters: { type: "object", properties: {}, additionalProperties: false },
+  };
+}
+
+describe("createAgent — tool discovery", () => {
+  it("passes a smaller tools array until activate_tools runs", async () => {
+    const toolsPerCall: number[] = [];
+    const adapter = {
+      generateResponse: async (
+        _messages: unknown[],
+        apiTools: unknown[],
+      ) => {
+        toolsPerCall.push(apiTools.length);
+        if (toolsPerCall.length === 1) {
+          return toolCallResponse("activate_tools", { names: ["beta"] });
+        }
+        if (toolsPerCall.length === 2) {
+          return toolCallResponse("beta", { x: "1" });
+        }
+        return textResponse("done");
+      },
+    };
+
+    const episodeTools = [
+      openAiToolDef("echo", "core echo"),
+      openAiToolDef("beta", "extended beta"),
+      openAiToolDef("finish_task", "finish"),
+    ];
+
+    const agent = createAgent({
+      ai: adapter,
+      instructions: "Test discovery.",
+      tools: episodeTools,
+      handlers: {
+        echo: { label: "[T]", execute: async () => ({ ok: true }) },
+        beta: { label: "[T]", execute: async () => ({ beta: true }) },
+        finish_task: {
+          label: "[T]",
+          execute: async ({ final_answer }) => {
+            throw new FinishTaskSignal(final_answer as string);
+          },
+        },
+      },
+      toolDiscovery: {
+        enabled: true,
+        coreToolNames: ["finish_task", "echo"],
+      },
+      maxIterations: 5,
+    });
+
+    await agent.processQuery("Discover and use beta.");
+    expect(toolsPerCall.length).toBeGreaterThanOrEqual(2);
+    const first = toolsPerCall[0]!;
+    const second = toolsPerCall[1]!;
+    expect(first).toBeLessThan(episodeTools.length + 3);
+    expect(second).toBeGreaterThan(first);
+  });
+
+  it("without toolDiscovery passes full tools every turn", async () => {
+    const toolsLengths: number[] = [];
+    const episodeTools = [
+      openAiToolDef("echo"),
+      openAiToolDef("beta"),
+    ];
+
+    const agent = createAgent({
+      ai: {
+        generateResponse: async (_m, t) => {
+          toolsLengths.push(t.length);
+          return textResponse("ok");
+        },
+      },
+      instructions: "Test.",
+      tools: episodeTools,
+      handlers: {
+        echo: { label: "[T]", execute: async () => ({}) },
+        beta: { label: "[T]", execute: async () => ({}) },
+      },
+    });
+
+    await agent.processQuery("Hi");
+    expect(toolsLengths.every((n) => n === episodeTools.length)).toBe(true);
+  });
+});
+
 describe("createAgent — observational memory", () => {
   it("injects observations when threshold exceeded", async () => {
     let omCalls = 0;

@@ -65,15 +65,19 @@ export function injectWorkingPlan(
 export function buildPlanningInstructions(
   baseInstructions: string,
   toolNames: string[] = [],
+  options?: { toolDiscoveryEnabled?: boolean },
 ): string {
   const planning = loadPlanningTurnPrompt().trim();
   const toolsLine =
     toolNames.length > 0
       ? `\n\nAvailable tools (name them in the plan only — **do not call** in turn 0): ${toolNames.join(", ")}.`
       : "";
+  const discoveryLine = options?.toolDiscoveryEnabled
+    ? "\n\nTool discovery is enabled: extended tools need **activate_tools** in turn 1+ (not turn 0)."
+    : "";
   const turnZero =
     "\n\n**Turn 0:** Reply with the working plan as plain text in this assistant message. No tool calls.";
-  return `${stripPreviousWorkingPlan(baseInstructions)}\n\n---\n${planning}${toolsLine}${turnZero}`;
+  return `${stripPreviousWorkingPlan(baseInstructions)}\n\n---\n${planning}${toolsLine}${discoveryLine}${turnZero}`;
 }
 
 export async function runPlanningTurn(args: {
@@ -82,6 +86,7 @@ export async function runPlanningTurn(args: {
   instructions: string;
   tools: unknown[];
   chatOptions?: ChatOptions;
+  toolDiscoveryEnabled?: boolean;
 }): Promise<{
   instructionsWithPlan: string;
   conversationAfterPlan: unknown[];
@@ -90,6 +95,7 @@ export async function runPlanningTurn(args: {
   const planningInstructions = buildPlanningInstructions(
     args.instructions,
     toolNames,
+    { toolDiscoveryEnabled: args.toolDiscoveryEnabled },
   );
 
   // Turn 0 must not register tools — otherwise some models call tools despite

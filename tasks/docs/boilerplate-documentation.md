@@ -136,7 +136,16 @@ Bezpośredni dostęp do logiki sterującej:
 - _Opis:_ Przerwanie pracy na żądanie pomocy od człowieka. Wstrzymuje proces w oczekiwaniu na wejście ze strumienia `stdin`.
 - _Parametry:_ `question` (string).
 
-### 5.2. Narzędzia MCP (`src/tools/mcp/`)
+### 5.2. Odkrywalność narzędzi (opcjonalna, S02E05)
+
+Epizody mogą włączyć **lazy registration** przez `createAgent({ toolDiscovery: { enabled: true } })`:
+
+- Meta-narzędzia: `list_tools`, `describe_tool`, `activate_tools` (natywne, wstrzykiwane przez runtime).
+- Domyślne **core** w API od pierwszej tury ReAct: `http_request`, `submit_to_hub`, `finish_task` (nadpisywalne przez `coreToolNames`).
+- Pozostałe MCP pojawiają się w function calling dopiero po `activate_tools`.
+- Bez QuickJS / `execute_code` (wzorzec z `lessons/02_05_sandbox` w wariancie pełnym — osobny research).
+
+### 5.3. Narzędzia MCP (`src/tools/mcp/`)
 
 Udostępniane przez serwer MCP (`mcp/server.ts`):
 

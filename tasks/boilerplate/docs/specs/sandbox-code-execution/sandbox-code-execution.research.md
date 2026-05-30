@@ -30,15 +30,120 @@
 
 Uzasadnienie w skrócie: lekcja uczy **innego modelu wywołań narzędzi** (batch w JS w QuickJS) niż boilerplate (jawny ReAct → jedno wywołanie MCP na turę). Wartość edukacyjna jest realna, ale **żadne obecne zadanie w `tasks/`** nie korzysta z tego wzorca; dodanie do core zwiększy złożoność, zależności WASM i koszt utrzymania bez natychmiastowej korzyści dla typowego epizodu (HTTP + hub + pliki).
 
-**Po kontekście S02E05 (materiał kursu):** zadanie domowe epizodu to **`drone`** (API drona + mapa + hub `/verify`) — **nie** wymaga `execute_code` ani piaskownicy QuickJS. Sandbox w epizodzie jest **przykładem architektury**, nie deliverable’em homeworku. Dla `tasks/s02e05` (gdy powstanie) wystarczy domyślny boilerplate: ReAct, `http_request`, `submit_to_hub`, `analyze_image_vision`, ewentualnie OM i faza planowania.
+**Po kontekście S02E05 (materiał kursu):** zadanie domowe epizodu to **`drone`** — **nie** wymaga sandboxa (szczegóły §3). **W oderwieniu od homeworku** wzorzec sandbox/code mode **jest uzasadniony** w określonych klasach problemów (§2); w boilerplate nadal jako **opt-in**, nie domyślny runtime (§2.6, §10).
 
 ---
 
-## 2. Kontekst epizodu S02E05 (materiał kursu)
+## 2. Zasadność sandboxa — analiza niezależna od homeworku
+
+Ta sekcja odpowiada na pytanie: *czy piaskownica z wykonywaniem kodu (jak w `02_05_sandbox`) ma sens jako element systemu agentowego — bez powiązania z zadaniem `drone`?*
+
+### 2.1 Trzy warstwy pojęcia „sandbox”
+
+W kursie i w kodzie mieszają się trzy znaczenia — warto je rozdzielić:
+
+| Warstwa | Co izoluje | Przykład w repo |
+| --- | --- | --- |
+| **A. Sandbox plików** | Ścieżki FS | `read_file` (chroot), `01_02_tool_use`, `files-mcp` |
+| **B. Sandbox wykonania kodu** | Runtime gościa (JS/TS) | QuickJS (`02_05_sandbox`), Deno (`03_02_code`), Daytona (`04_01_garden`) |
+| **C. Lazy discovery narzędzi** | Rozmiar kontekstu LLM | Meta-narzędzia `list_*` + `get_tool_schema` przed `execute_code` |
+
+Lekcja `02_05_sandbox` łączy **B + C**. Boilerplate ma dziś głównie **A** (w `read_file`). Analiza poniżej dotyczy **B+C** — „code mode”.
+
+### 2.2 Jaki problem rozwiązuje code mode?
+
+**Model mentalny ReAct (domyślny boilerplate):** każda akcja = tura LLM → jedno lub kilka `tool_call` → wynik wraca do kontekstu → kolejna tura.
+
+**Model code mode:** LLM generuje **program**, który w izolowanym runtime wywołuje wiele operacji (mosty do MCP), a do kontekstu wraca głównie **stdout / błąd / skrót**.
+
+| Problem | ReAct (bez sandboxa) | Code mode |
+| --- | --- | --- |
+| **Koszt kontekstu** | Każde wywołanie narzędzia + schemat w historii | Duże dane i pośrednie kroki zostają w zmiennych gościa; LLM widzi log |
+| **Wiele kroków MCP** | N tur × (myśl + tool + wynik) = N× latency + tokeny | 1–2 tury LLM (discovery + kod) + wiele wywołań po stronie hosta |
+| **Logika sterująca** | Pętle/warunki przez kolejne tury (kruche) | `for`, `if`, `try` w kodzie gościa |
+| **Duży zestaw MCP** | Wszystkie schematy narzędzi w każdej turze (lub ręczny subset) | Tylko 4 meta-narzędzia + schematy **ładowane na żądanie** |
+| **Łączenie wyników** | Model musi „pamiętać” JSON z poprzednich tur | Kod składa wyniki lokalnie |
+
+**Wniosek:** Code mode jest **uzasadniony architektonicznie** tam, gdzie dominuje **orchestracja wielu wywołań API/MCP** z transformacją danych, a nie pojedyncze zapytanie z jedną odpowiedzią.
+
+### 2.3 Kiedy sandbox (B+C) **ma sens**
+
+Użyj code mode (lub silnego odpowiednika), gdy spełnione są **≥2** z poniższych:
+
+1. **Wolumen wywołań** — typowo >5–10 wywołań narzędzi na jedno zadanie użytkownika (np. CRUD po wielu rekordach, paginacja API).
+2. **Wolumen danych** — odpowiedzi narzędzi są duże; do LLM ma trafić agregat, nie surowy JSON (lista 500 elementów).
+3. **Powtarzalna procedura** — ten sam schemat kroków (map → filter → update) lepiej jako skrypt niż jako N tur z ryzykiem „zgubienia” kroku.
+4. **Eksplozja powierzchni MCP** — wiele serwerów / dziesiątki narzędzi; trzymanie wszystkich schematów w prompcie jest nieekonomiczne.
+5. **Kontrolowane ryzyko** — potrzebujesz **więcej** możliwości niż surowe MCP, ale z **ograniczonym** mostem (tylko załadowane narzędzia, timeout, limit pamięci — jak w `sandbox.ts`).
+
+**Przykłady spoza homeworku S02E05** (hipotetyczne, zgodne z kursem):
+
+- Migracja / synchronizacja wielu rekordów między API.
+- Batch analiza plików w katalogu (wynik: tabela statystyk, nie N× `read_file` w kontekście).
+- Orchestracja wielu hubów / endpointów z jedną finalną odpowiedzią.
+
+### 2.4 Kiedy sandbox **nie ma sensu** (ReAct wystarczy)
+
+1. **Krótki łańcuch** — 1–3 narzędzia, wynik końcowy ma być widoczny krok po kroku (debug, audyt, nauka).
+2. **Zadanie „puzzle” oparte na feedbacku** — każda próba zależy od komunikatu błędu z zewnętrznego API; jawna tura ReAct + czytelny log `[AKCJA]`/`[WYNIK]` pomaga modelowi i człowiekowi (to profil wielu zadań kursowych, w tym iteracji na `/verify`).
+3. **Vision / interpretacja** — pierwszy krok to multimodalna analiza; sandbox nie zastępuje narzędzia vision.
+4. **Edukacja „bez czarnej magii”** — boilerplate celowo pokazuje pętlę ReAct; ukrycie kroków w QuickJS utrudnia zrozumienie *co* agent zrobił.
+5. **Koszt implementacji > korzyść** — WASM, mosty sync/asyncify, registry, testy — dla prostych flow to overkill.
+
+**Reguła kciuka:** jeśli da się zadanie rozwiązać w **≤5 turach** ReAct z **≤4 narzędziami** w prompcie — **nie** wprowadzaj code mode.
+
+### 2.5 Code mode vs alternatywy (ten sam problem, inne narzędzie)
+
+| Podejście | Mocne strony | Słabe strony |
+| --- | --- | --- |
+| **ReAct + bezpośrednie MCP** (boilerplate) | Prostość, logi, zgodność z kursem | Kontekst i latency rosną z liczbą kroków |
+| **ReAct + OM + planning** (boilerplate opt-in) | Długie sesje, plan przed akcją | Nie zastępuje batchowania wywołań |
+| **QuickJS in-process** (`02_05_sandbox`) | Lekki start, brak Deno; sync bridge do MCP | Ograniczony JS; niuanse asyncify |
+| **Deno subprocess** (`03_02_code`) | Prawdziwy TS, uprawnienia Deno | Zewnętrzna zależność, cięższy runtime |
+| **Zdalny VM** (`04_01_garden`) | Pełne repo, git, terminal | Koszt, infrastruktura |
+| **Kod po stronie zadania (TS)** | Pełna kontrola, zero WASM w boilerplate | Agent nie generuje orchestracji — to skrypt, nie agent |
+
+**Wniosek:** Code mode nie jest „lepszy” od ReAct — to **druga biegłość** dla innej klasy złożoności. W monorepo kursu **trzy** implementacje sandboxa (QuickJS, Deno, Daytona) pokazują, że **nie ma jednego uniwersalnego** — wybór zależy od środowiska i ryzyka.
+
+### 2.6 Zasadność w kontekście `tasks/boilerplate` (bez homeworku)
+
+| Pytanie | Odpowiedź |
+| --- | --- |
+| Czy wzorzec jest **merytorycznie słuszny**? | **Tak** — to uznany kierunek (tool search + code execution / MCP code mode). |
+| Czy **musi** być w domyślnym boilerplate? | **Nie** — misja pakietu to jawny ReAct + MCP kursowe; code mode to warstwa zaawansowana. |
+| Czy **warto** mieć w repo współdzielony moduł? | **Umiarkowanie tak** — jeśli planujecie zadania z batch MCP lub studenci mają replikować lekcję w `tasks/`; inaczej wystarczy `lessons/02_05_sandbox`. |
+| QuickJS vs Deno w boilerplate? | **Nie scalać obu** w jednym pakiecie bez decyzji; lekcje już rozdzielają przypadki użycia. |
+
+**Werdykt ogólny (niezależny od `drone`):**
+
+```text
+Sandbox/code mode: ZASADNY jako wzorzec i jako moduł opt-in w boilerplate.
+                   NIEZASADNY jako domyślny tryb wszystkich zadań AI Devs 4.
+```
+
+### 2.7 Macierz decyzyjna (skrót)
+
+|  | Niski koszt kontekstu / mało kroków | Wysoki koszt / wiele kroków |
+| --- | --- | --- |
+| **Prosta logika** | ReAct | ReAct (+ ewentualnie planning) |
+| **Złożona orchestracja danych** | ReAct (możliwe, ale drogie) | **Code mode + sandbox** |
+| **Wiele serwerów MCP** | Ręczny subset narzędzi w prompcie | **Lazy discovery + code mode** |
+
+### 2.8 Ryzyka sandboxa (też niezależne od homeworku)
+
+- **Debugowanie:** błąd w wygenerowanym kodzie vs błąd w `tool_call` — trudniejsza diagnostyka dla początkujących.
+- **Bezpieczeństwo iluzoryczne:** QuickJS izoluje JS, ale mosty wołają **prawdziwe** MCP (HTTP, hub) — zły skrypt = realne skutki uboczne.
+- **Halucynacje API:** model może użyć nieistniejącej metody w kodzie gościa (jak złe `tool_call` w ReAct).
+- **Koszt LLM nie znika:** nadal potrzebna tura na discovery i generację kodu; oszczędność jest na **turach pośrednich**, nie na zerowym LLM.
+- **Utrzymanie:** osobny kontrakt (loaded tools, sync bridge) obok MCP + Zod w boilerplate.
+
+---
+
+## 3. Kontekst epizodu S02E05 (materiał kursu) — homework
 
 Źródło: `markdowns/s02e05-projektowanie-agentow-1773962356.md` (publikacja lekcji 2026-03-20).
 
-### 2.1 Dwa filary techniczne epizodu
+### 3.1 Dwa filary techniczne epizodu
 
 | Temat w lekcji | Przykład w repo | Stan w boilerplate |
 | --- | --- | --- |
@@ -47,7 +152,7 @@ Uzasadnienie w skrócie: lekcja uczy **innego modelu wywołań narzędzi** (batc
 
 Lekcja explicite łączy **Observational Memory** z S02E03 (sekcja WORKSPACE w promptcie orchestratora). To potwierdza wcześniejszą decyzję: **OM w boilerplate = zgodne z kursem**; sandbox = **osobny wzorzec**, nie ten sam priorytet co OM.
 
-### 2.2 Co kurs mówi o `02_05_sandbox`
+### 3.2 Co kurs mówi o `02_05_sandbox`
 
 - Motywacja: zbyt sztywne ograniczenia narzędzi obniżają użyteczność → systemy w **sandboxach** z balansem ryzyka.
 - Agent startuje tylko z: `list_servers`, `list_tools`, `get_tool_schema`, `execute_code` — reszta MCP **nie zajmuje kontekstu** do momentu discovery.
@@ -55,7 +160,7 @@ Lekcja explicite łączy **Observational Memory** z S02E03 (sekcja WORKSPACE w p
 - Korzyści (kurs): łączenie narzędzi, duże dane jako zmienne w kodzie (nie w kontekście LLM).
 - Koszty (kurs): **nowa złożoność architektury i kosztów** — sandbox nie rozwiązuje wszystkiego.
 
-### 2.3 Zadanie domowe: `drone` (nie sandbox)
+### 3.3 Zadanie domowe: `drone` (nie sandbox)
 
 | Aspekt | Wymaganie |
 | --- | --- |
@@ -73,7 +178,7 @@ analyze_image_vision (mapa) → http_request (dokumentacja HTML) → ReAct + sub
 
 Pułapki w dokumentacji drona i feedback z `/verify` naturalnie pasują do **jawnej pętli ReAct** i logów `[WYNIK]` — nie do ukrytej orchestracji w QuickJS.
 
-### 2.4 Wniosek z materiału kursu
+### 3.4 Wniosek z materiału kursu
 
 1. **Homework S02E05 nie uzasadnia** portu QuickJS do boilerplate.
 2. **Sandbox w boilerplate** ma sens tylko jako **materiał uzupełniający** (Opcja A) lub **moduł opt-in** (Opcja B) dla studentów eksperymentujących z lekcją — nie jako wymóg epizodu `drone`.
@@ -81,9 +186,9 @@ Pułapki w dokumentacji drona i feedback z `/verify` naturalnie pasują do **jaw
 
 ---
 
-## 3. Co robi lekcja `02_05_sandbox`
+## 4. Co robi lekcja `02_05_sandbox`
 
-### 3.1 Cel pedagogiczny
+### 4.1 Cel pedagogiczny
 
 Pokazać **code mode**: zamiast wielu tur LLM × pojedyncze `tool_call`, model:
 
@@ -91,7 +196,7 @@ Pokazać **code mode**: zamiast wielu tur LLM × pojedyncze `tool_call`, model:
 2. Ładuje sygnaturę TypeScript narzędzia (`get_tool_schema`) — **lazy load** do sesji.
 3. Pisze **JavaScript** wykonywany w **QuickJS (WASM, asyncify)** z synchronicznymi mostami do implementacji MCP (`execute_code`).
 
-### 3.2 Kluczowe komponenty
+### 4.2 Kluczowe komponenty
 
 | Plik / moduł | Rola |
 | --- | --- |
@@ -102,7 +207,7 @@ Pokazać **code mode**: zamiast wielu tur LLM × pojedyncze `tool_call`, model:
 | `src/agent.ts` | **Osobna** pętla: OpenAI **Chat Completions**, `MAX_TURNS=15`, szablony z `workspace/agents/*.agent.md` |
 | `package.json` | Zależności: `quickjs-emscripten-core`, `@jitl/quickjs-wasmfile-release-asyncify` |
 
-### 3.3 Przepływ demo
+### 4.3 Przepływ demo
 
 ```text
 index.ts → connect MCP todo (stdio) → runAgent('sandbox', task)
@@ -110,7 +215,7 @@ index.ts → connect MCP todo (stdio) → runAgent('sandbox', task)
   → execute_code → QuickJS z API todo.create/list/...
 ```
 
-### 3.4 Uwagi techniczne (ważne przy porcie)
+### 4.4 Uwagi techniczne (ważne przy porcie)
 
 - Mosty narzędzi muszą być **synchroniczne z perspektywy QuickJS** (komentarze w `sandbox.ts` — `async` w gościu psuje flush microtasków).
 - `getLoadedImplementations()` eksponuje tylko narzędzia wcześniej załadowane przez `get_tool_schema`.
@@ -118,9 +223,9 @@ index.ts → connect MCP todo (stdio) → runAgent('sandbox', task)
 
 ---
 
-## 4. Stan `tasks/boilerplate` (baseline)
+## 5. Stan `tasks/boilerplate` (baseline)
 
-### 4.1 Model wywołań narzędzi
+### 5.1 Model wywołań narzędzi
 
 - **`createAgent`** + **OpenAI Responses API** (`ai.ts`).
 - Narzędzia MCP: **bezpośrednio** w handlerach — `callMcpTool(mcpClient, name, args)` po każdym `tool_call` z modelu.
@@ -128,12 +233,12 @@ index.ts → connect MCP todo (stdio) → runAgent('sandbox', task)
 - Natywne: `finish_task`, `ask_human`.
 - **Brak** `execute_code`, `list_servers`, lazy schema load.
 
-### 4.2 „Sandbox” w boilerplate dziś
+### 5.2 „Sandbox” w boilerplate dziś
 
 - `read_file` — **sandboxing ścieżek** (chroot względem katalogu zadania), **nie** wykonanie kodu.
 - Inne znaczenie niż w lekcji 02_05.
 
-### 4.3 Powiązanie z tym samym modułem kursu (S02E05)
+### 5.3 Powiązanie z tym samym modułem kursu (S02E05)
 
 | Lekcja | W boilerplate |
 | --- | --- |
@@ -142,14 +247,14 @@ index.ts → connect MCP todo (stdio) → runAgent('sandbox', task)
 
 OM był explicite w spec (`boilerplate-documentation.md` §4.3, KROK 6). **Code mode nie jest** w spec boilerplate ani w żadnym `tasks/sXXeYY`.
 
-### 4.4 Zależności
+### 5.4 Zależności
 
 Boilerplate: `@modelcontextprotocol/sdk`, `zod` tylko.  
 Lekcja sandbox: +2 pakiety QuickJS WASM (~rozmiar i czas cold start).
 
 ---
 
-## 5. Porównanie z innymi lekcjami „sandbox”
+## 6. Porównanie z innymi lekcjami „sandbox”
 
 | Lekcja | Mechanizm | Kiedy sensowny |
 | --- | --- | --- |
@@ -162,7 +267,7 @@ Lekcja sandbox: +2 pakiety QuickJS WASM (~rozmiar i czas cold start).
 
 ---
 
-## 6. Mapowanie lekcja → boilerplate
+## 7. Mapowanie lekcja → boilerplate
 
 | Element lekcji | Zgodność z architekturą boilerplate | Uwagi |
 | --- | --- | --- |
@@ -175,16 +280,16 @@ Lekcja sandbox: +2 pakiety QuickJS WASM (~rozmiar i czas cold start).
 
 ---
 
-## 7. Korzyści i koszty dodania do boilerplate
+## 8. Korzyści i koszty dodania do boilerplate
 
-### 7.1 Korzyści (gdy opt-in)
+### 8.1 Korzyści (gdy opt-in)
 
 1. **Mniej tur LLM** przy złożonej orchestracji (N wywołań MCP w jednym `execute_code`).
 2. **Spójność materiału S02E05** — OM już w pakiecie; code mode jako drugi filar tej lekcji.
 3. **Reuse kodu** — `sandbox.ts` jest samodzielny (~220 LOC), testowalny jednostkowo.
 4. **Wzorzec na przyszłe epizody** z wieloma krokami API (np. wieloetapowe CRUD bez pisania pętli w TS zadania).
 
-### 7.2 Koszty i ryzyka
+### 8.2 Koszty i ryzyka
 
 | Ryzyko | Opis | Siła |
 | --- | --- | --- |
@@ -197,11 +302,11 @@ Lekcja sandbox: +2 pakiety QuickJS WASM (~rozmiar i czas cold start).
 | **Utrzymanie** | Asyncify, limity pamięci, edge cases microtasków | Średnia |
 | **Reguła repo** | Nowe zależności wymagają zgody tech lead (eversis-agent-core) | Procesowa |
 
-### 7.3 Zadania, które zyskają / nie zyskają
+### 8.3 Zadania, które zyskają / nie zyskają
 
 | Typ zadania | Zysk z code mode |
 | --- | --- |
-| **S02E05 homework `drone`** | **Brak** — vision + HTTP + iteracja na hub (patrz §2.3) |
+| **S02E05 homework `drone`** | **Brak** — vision + HTTP + iteracja na hub (patrz §3.3) |
 | Pojedyncze `http_request` + `submit_to_hub` | Brak — szum |
 | s02e04 mailbox (wiele tur, pamięć) | Niski — już OM + jawne MCP |
 | Hipotetyczne: 20+ wywołań MCP z transformacją danych | Wysoki |
@@ -209,13 +314,13 @@ Lekcja sandbox: +2 pakiety QuickJS WASM (~rozmiar i czas cold start).
 
 ---
 
-## 8. Opcje implementacyjne (do planu — nie wybór w research)
+## 9. Opcje implementacyjne (do planu — nie wybór w research)
 
 ### Opcja A — Tylko dokumentacja (minimalna)
 
 - Sekcja w `tasks/boilerplate/README.md` + link do `lessons/02_05_sandbox`.
 - **Koszt:** ~0 LOC w runtime.
-- **Kiedy:** S02E05 homework = `drone` bez code mode; lekcja sandbox pozostaje w `lessons/02_05_sandbox` (stan zalecany po §2).
+- **Kiedy:** homework = `drone` bez code mode; wzorzec ogólny — §2; lekcja w `lessons/02_05_sandbox`.
 
 ### Opcja B — Moduł opt-in w boilerplate (rekomendowana, jeśli implementować)
 
@@ -242,7 +347,7 @@ tasks/boilerplate/src/sandbox/
 
 ---
 
-## 9. Rekomendacja produktowa
+## 10. Rekomendacja produktowa
 
 1. **Nie dodawać** sandboxa QuickJS do **domyślnego** zestawu narzędzi boilerplate (jak `http_request`).
 2. **Dla S02E05 (`drone`):** zostać przy domyślnym boilerplate; ewentualnie krótka sekcja w README epizodu / boilerplate: „sandbox = lekcja `02_05_sandbox`, homework = ReAct + vision”.
@@ -254,7 +359,7 @@ tasks/boilerplate/src/sandbox/
 
 ---
 
-## 10. Acceptance criteria (dla fazy planu, jeśli zaakceptowane)
+## 11. Acceptance criteria (dla fazy planu, jeśli zaakceptowane)
 
 Research uznaje się za zamknięte, gdy człowiek wybierze jedną ścieżkę:
 
@@ -273,9 +378,9 @@ Jeśli **B**: plan powinien obejmować:
 
 ---
 
-## 11. Open questions (do człowieka)
+## 12. Open questions (do człowieka)
 
-1. ~~Czy homework S02E05 wymaga sandboxa?~~ → **Nie** (`drone` — §2.3). Czy planujesz **inne** zadanie w `tasks/` z code mode?
+1. ~~Czy homework S02E05 wymaga sandboxa?~~ → **Nie** (`drone` — §3.3). Czy planujesz **inne** zadanie w `tasks/` z code mode (§2.3)?
 2. Czy dla `tasks/s02e05` wolisz **tylko** scaffold pod `drone` (bez sandboxa), czy równolegle moduł opt-in z lekcji?
 3. Czy preferowany runtime kodu gościa to **QuickJS (lekcja)** czy **Deno (`03_02_code`)** — unikamy dwóch oficjalnych ścieżek w boilerplate bez decyzji.
 4. Czy zależności WASM są **akceptowalne** w `@ai-devs/agent-boilerplate`, czy wolisz Opcję D (osobny pakiet)?
@@ -283,15 +388,15 @@ Jeśli **B**: plan powinien obejmować:
 
 ---
 
-## 12. Suggested next steps
+## 13. Suggested next steps
 
-1. **Ty:** wybierz ścieżkę z §10 — po materiale S02E05 naturalna domyślna to **A** (dokumentacja) lub **odłożyć** implementację sandboxa; osobno możesz zlecić scaffold **`tasks/s02e05`** pod `drone`.
+1. **Ty:** wybierz ścieżkę z §11 — jeśli akceptujesz §2 (wzorzec OK, opt-in w boilerplate), domyślna to **A** (dokumentacja) lub **B** tylko przy konkretnym zadaniu batch-MCP.
 2. **Po akceptacji research:** `@eversis-implement` → faza **Plan** tylko jeśli wybierzesz B/C/D.
 3. **Implementacja** tylko po akceptacji planu; nowe pakiety — zgodnie z regułami repo, po zgodzie tech lead.
 
 ---
 
-## 13. Referencje kodu
+## 14. Referencje kodu
 
 Lekcja — most QuickJS → MCP:
 

@@ -157,6 +157,26 @@ const agent = createAgent({
 
 Turn 0 uses `tool_choice: "none"`, does not consume ReAct iterations, and injects a `## Working plan` block into instructions. Shorten episode prompt checklists when enabling this flag to avoid duplicating the generated plan.
 
+### Tool discovery (optional, S02E05-inspired)
+
+When an episode registers many MCP tools, you can avoid sending every JSON Schema on every ReAct turn:
+
+```typescript
+const agent = createAgent({
+  ai: createAIAdapter({ model: DEFAULT_AGENT_MODEL }),
+  instructions: systemPrompt,
+  tools: allTools,
+  handlers,
+  toolDiscovery: {
+    enabled: true,
+    coreToolNames: ["http_request", "submit_to_hub", "finish_task"],
+    // autoActivateOnUnknownTool: false, // default
+  },
+});
+```
+
+The runtime injects meta tools and appends guidance from `src/prompts/tool_discovery.md`. Extended tools become callable only after `activate_tools`. Course reference: `lessons/02_05_sandbox` (that lesson also uses QuickJS `execute_code` — not included here).
+
 ---
 
 ## MCP server (in-process)
@@ -197,6 +217,7 @@ tasks/boilerplate/
     │   ├── agent.ts               # createAgent() — ReAct loop, MAX_ITERATIONS guard
     │   ├── planning.ts            # Turn 0 planning + Working plan injection
     │   ├── memory.ts              # MemoryHooks interface + noop default
+    │   ├── tool_discovery/        # opt-in list_tools / describe_tool / activate_tools
     │   └── observational_memory/  # createObservationalMemoryHooks (S02E05 OM)
     ├── mcp/
     │   ├── client.ts              # createMcpClient, listMcpTools, callMcpTool, mcpToolsToOpenAI
@@ -204,7 +225,10 @@ tasks/boilerplate/
     ├── tools/
     │   ├── native/
     │   │   ├── finish_task.ts     # finish_task — terminates agent loop with final answer
-    │   │   └── ask_human.ts       # ask_human — blocks on stdin for human input
+    │   │   ├── ask_human.ts       # ask_human — blocks on stdin for human input
+    │   │   ├── list_tools.ts      # tool discovery catalog
+    │   │   ├── describe_tool.ts   # tool discovery schema preview
+    │   │   └── activate_tools.ts  # tool discovery activation
     │   └── mcp/
     │       ├── http_request.ts    # http_request — GET/POST with retry/backoff
     │       ├── submit_to_hub.ts   # submit_to_hub — POST answer to hub, extract flag

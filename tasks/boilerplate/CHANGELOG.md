@@ -15,6 +15,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Token calibration** — `ModelResponse.usage` from Responses API; dual estimator (raw Observer threshold, calibrated observation/Reflector budgets); `enableCalibration` opt-out.
 - **`AfterTurnContext.lastResponse`** — agent passes estimated tokens + usage for OM calibration after each ReAct turn.
 - **Planning phase (turn 0)** — opt-in `enablePlanningPhase` on `createAgent` (see prior unreleased entries).
+- **Tool discovery (S02E05-inspired, opt-in)** — `createAgent({ toolDiscovery: { enabled: true } })`: meta tools `list_tools`, `describe_tool`, `activate_tools`; dynamic API tool set via `activate_tools`; default core `http_request`, `submit_to_hub`, `finish_task`.
 - **`http_request` tests** — POST without `body` rejected before fetch.
 
 ### Changed

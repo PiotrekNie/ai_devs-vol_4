@@ -16,6 +16,12 @@ Key tools:
 - **analyze_image_vision** — describe an image with a lightweight vision model
 - **finish_task** — call when you have the complete, verified answer
 
+## Tool discovery (optional)
+
+Episodes may enable **lazy tool registration** via `createAgent({ toolDiscovery: { enabled: true } })`.
+Only core tools and meta tools (`list_tools`, `describe_tool`, `activate_tools`) are callable at first;
+call **activate_tools** before using other MCP tools. See `lessons/02_05_sandbox` for the course pattern.
+
 ## Planning phase (optional)
 
 Episodes may enable **turn 0** via `createAgent({ enablePlanningPhase: true })` or

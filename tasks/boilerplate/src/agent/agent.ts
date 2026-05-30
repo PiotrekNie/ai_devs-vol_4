@@ -21,6 +21,8 @@ import type { AIAdapter, ChatOptions } from "./ai.js";
 import type { ToolCall } from "../types/index.js";
 import type { MemoryHooks } from "./memory.js";
 import { runPlanningTurn } from "./planning.js";
+import { setupToolDiscovery, type ToolDiscoveryRuntime } from "./tool_discovery/index.js";
+import type { ToolDiscoveryOptions } from "./tool_discovery/types.js";
 import { FinishTaskSignal } from "../tools/native/finish_task.js";
 import {
   logThought,
@@ -63,6 +65,8 @@ export type AgentConfig = {
    * Turn 0 does not count toward maxIterations. Default: false.
    */
   enablePlanningPhase?: boolean;
+  /** S02E05-inspired lazy tool registration (opt-in). */
+  toolDiscovery?: ToolDiscoveryOptions;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -102,12 +106,30 @@ async function dispatchToolCall(
   call: ToolCall,
   handlers: Record<string, ToolHandler | undefined>,
   maxChars: number,
+  discovery?: ToolDiscoveryRuntime | null,
 ): Promise<{ type: "function_call_output"; call_id: string; output: string }> {
   const args = JSON.parse(call.arguments) as Record<string, unknown>;
   const handler = handlers[call.name];
 
   if (!handler) {
-    const errOut = JSON.stringify({ error: `Unknown tool: ${call.name}` });
+    const prepared = discovery?.tryPrepareInactiveTool(call.name);
+    if (prepared) {
+      logSystem("tool discovery: auto-activated inactive tool", {
+        name: call.name,
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: truncateOutput(prepared.message, maxChars),
+      };
+    }
+
+    const errOut = JSON.stringify({
+      error: `Unknown tool: ${call.name}`,
+      hint: discovery
+        ? "Use list_tools, then activate_tools before calling inactive MCP tools."
+        : undefined,
+    });
     logError(`Unknown tool: ${call.name}`);
     return {
       type: "function_call_output",
@@ -154,7 +176,13 @@ export function createAgent({
   memory,
   chatOptions,
   enablePlanningPhase = false,
+  toolDiscovery,
 }: AgentConfig) {
+  const { runtime: discovery, instructions: resolvedInstructions } =
+    setupToolDiscovery(toolDiscovery, tools, handlers, instructions);
+
+  const loopHandlers = discovery?.handlers ?? handlers;
+
   async function runLoop(
     conversation: unknown[],
     loopInstructions: string,
@@ -177,9 +205,11 @@ export function createAgent({
         currentInstructions,
       );
 
+      const apiTools = discovery ? discovery.getApiTools() : tools;
+
       const response = await ai.generateResponse(
         conversation,
-        tools,
+        apiTools,
         currentInstructions,
         chatOptions,
       );
@@ -219,8 +249,9 @@ export function createAgent({
         try {
           const result = await dispatchToolCall(
             call,
-            handlers,
+            loopHandlers,
             maxToolOutputChars,
+            discovery,
           );
           toolResults.push(result);
         } catch (err) {
@@ -271,16 +302,19 @@ export function createAgent({
     conversation: unknown[],
   ): Promise<{ text: string; nextConversation: unknown[] }> {
     if (!enablePlanningPhase) {
-      return runLoop(conversation, instructions);
+      return runLoop(conversation, resolvedInstructions);
     }
+
+    const planningTools = discovery?.allTools ?? tools;
 
     const { instructionsWithPlan, conversationAfterPlan } =
       await runPlanningTurn({
         ai,
         conversation,
-        instructions,
-        tools,
+        instructions: resolvedInstructions,
+        tools: planningTools,
         chatOptions,
+        toolDiscoveryEnabled: discovery != null,
       });
 
     return runLoop(conversationAfterPlan, instructionsWithPlan);
