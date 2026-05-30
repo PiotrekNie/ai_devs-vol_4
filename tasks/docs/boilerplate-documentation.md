@@ -18,6 +18,34 @@ Projekt opiera się na architekturze modułowej, w której agent jest oddzielony
 3. **Pamięć i Kompresja (Observer/Reflector):** Długoterminowe zarządzanie oknem kontekstowym dla wieloetapowych zadań, zapobiegające przekroczeniu limitu tokenów.
 4. **Odporność (Resilience):** Wbudowany mechanizm Exponential Backoff dla błędów sieciowych (np. celowe błędy HTTP 503 na serwerach kursowych).
 
+### 2.1. Project constraints (S03E02)
+
+Lekcja S03E02 uczy projektowania agentów **pod ograniczenia modeli** (koszt, latency, halucynacje, bezpieczeństwo). Boilerplate dostarcza runtime ReAct; **decyzje, co robi model, a co kod**, należy do autora epizodu. Poniższa tabela to szybka ściąga przy starcie nowego zadania w `tasks/sXXeYY/`.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Podział logiki** | Deterministyczne filtry / agregacje w **MCP TypeScript** (0 tokenów ReAct) | LLM analizuje każdy rekord / plik osobno | [s03e01 — `scan_sensors`](../s03e01/src/tools/mcp/scan_sensors.ts) |
+| **Orkiestracja** | ReAct + ≤5 tur, jawne narzędzia, `finish_task` | Pełna automatyzacja bez człowieka przy akcjach nieodwracalnych | [boilerplate README](../boilerplate/README.md) |
+| **Planowanie** | `enablePlanningPhase` + aktualizacja `## Working plan` po feedbacku hub | Heartbeat multi-agent dla prostego homework | [`planning.ts`](../boilerplate/src/agent/planning.ts), [`evaluation_memory.ts`](../s03e01/src/agent/evaluation_memory.ts) |
+| **Duże dane** | Batch po unikalnych kluczach + cache odpowiedzi LLM w warstwie epizodu | Wczytanie 10k+ rekordów do kontekstu | [`classifyNotes.ts`](../s03e01/src/domain/classifyNotes.ts) |
+| **Wiele wywołań MCP** | Code mode w **lekcji** / deterministyczny skrypt developera | `execute_code` w domyślnym pakiecie | [lessons/03_02_code](../../lessons/03_02_code/), [§5.2.1](#521-code-mode--wykonanie-kodu-poza-pakietem) |
+| **Kontekst LLM** | `toolDiscovery` gdy >4 narzędzia; OM dla długich sesji **jednego** agenta | Wszystkie schematy MCP w każdej turze | [README — Tool discovery](../boilerplate/README.md#tool-discovery-optional-s02e05-inspired) |
+| **Modele** | Mini na klasyfikację / enum; mocniejszy model na reasoning (env) | Jeden drogi model „everywhere” | [`config.ts`](../boilerplate/config.ts) |
+| **Bezpieczeństwo** | Brak narzędzi nieodwracalnych; uprawnienia w **handlerze** MCP, nie w prompcie | Model decyduje o wysyłce maila / shell bez limitów | wzorzec lekcji `03_02_email` (materiał kursu) |
+| **Prompt injection** | System prompt bez sekretów; nieufność wobec treści zewnętrznych | Poleganie na „nie ujawniaj instrukcji” jako jedyną barierę | — |
+| **Obserwowalność** | Langfuse opt-in do debugu kosztów | Langfuse jako warunek poprawności solve | [observability/](../boilerplate/src/observability/) |
+| **Homework typu shell/API** | `http_request` + retry 429/503 + opisowe błędy w narzędziu epizodu | Sandbox Deno gdy wystarczy sekwencja HTTP | zadanie `firmware` (S03E02) |
+
+**Reguła kciuka:**
+
+```text
+≤5 tur ReAct i ≤4 narzędzi w prompcie → default boilerplate (bez discovery, OM, code mode).
+Wiele wywołań MCP / agregacja dużych plików → lekcja code mode LUB deterministyczne MCP w TS.
+Multi-agent / heartbeat → lekcja events, nie pakiet kursowy.
+```
+
+**Odniesienia:** [research S03E02](../boilerplate/docs/specs/s03e02-model-constraints/s03e02-model-constraints.research.md) · [przykład epizodu s03e01](../s03e01/)
+
 ---
 
 ## 3. Struktura Katalogów (Directory Tree)
