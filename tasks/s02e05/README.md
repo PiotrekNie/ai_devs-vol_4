@@ -14,7 +14,7 @@ Agent **ReAct** dla zadania kursu **AI Devs 4** S02E05: vision na mapie, live do
 | Materiał | Gdzie |
 | --- | --- |
 | Observational Memory (`02_05_agent`) | W boilerplate — włączone w `run.ts` |
-| Sandbox / code mode (`02_05_sandbox`) | Lekcja w `lessons/` — **poza** tym epizodem |
+| Sandbox / code mode (`02_05_sandbox`) | Lekcja w `lessons/` — **poza** tym epizodem; szczegóły w [boilerplate README § Code mode](../boilerplate/README.md#code-mode--sandbox-not-in-boilerplate) |
 | Homework **`drone`** | Ten katalog — ReAct + vision + HTTP + hub |
 
 ---

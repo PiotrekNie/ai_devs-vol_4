@@ -3,7 +3,7 @@
 **Task:** Zweryfikować zasadność przeniesienia funkcjonalności z `lessons/02_05_sandbox` do `tasks/boilerplate` (`@ai-devs/agent-boilerplate`).
 
 **Data:** 2026-05-27  
-**Status:** Research — **oczekuje na akceptację człowieka** przed planem / implementacją.
+**Status:** **Zaimplementowano (Opcja A — dokumentacja)** (2026-05-30). Plan: [sandbox-code-execution.plan.md](sandbox-code-execution.plan.md).
 
 **Źródła:**
 
@@ -359,17 +359,17 @@ tasks/boilerplate/src/sandbox/
 
 ---
 
-## 11. Acceptance criteria (dla fazy planu, jeśli zaakceptowane)
+## 11. Acceptance criteria — decyzja (2026-05-30)
 
-Research uznaje się za zamknięte, gdy człowiek wybierze jedną ścieżkę:
-
-- [ ] **A** — tylko dokumentacja, bez kodu w boilerplate  
+- [x] **A** — tylko dokumentacja, bez kodu w boilerplate  
 - [ ] **B** — moduł opt-in + testy jednostkowe + przykład w README  
 - [ ] **C** — pełna integracja domyślna (wymaga silnego uzasadnienia biznesowego)  
-- [ ] **D** — osobny pakiet  
+- [ ] **D** — osobny pakiet *(preferencja na przyszłość, jeśli kiedyś B — nie wdrażane teraz)*  
 - [ ] **Odłożyć** — brak zadań kursowych wymagających code mode w najbliższym sprincie  
 
-Jeśli **B**: plan powinien obejmować:
+**Follow-up poza boilerplate:** osobny PR z `sandbox.agent.md` w `lessons/02_05_sandbox` (zgoda człowieka).
+
+Jeśli kiedyś **B**: plan powinien obejmować:
 
 - API registry (jak mapować `registerTool` MCP → implementacje w QuickJS).
 - Czy meta-tools są native czy MCP.
@@ -378,21 +378,24 @@ Jeśli **B**: plan powinien obejmować:
 
 ---
 
-## 12. Open questions (do człowieka)
+## 12. Open questions — rozstrzygnięte (2026-05-30)
 
-1. ~~Czy homework S02E05 wymaga sandboxa?~~ → **Nie** (`drone` — §3.3). Czy planujesz **inne** zadanie w `tasks/` z code mode (§2.3)?
-2. Czy dla `tasks/s02e05` wolisz **tylko** scaffold pod `drone` (bez sandboxa), czy równolegle moduł opt-in z lekcji?
-3. Czy preferowany runtime kodu gościa to **QuickJS (lekcja)** czy **Deno (`03_02_code`)** — unikamy dwóch oficjalnych ścieżek w boilerplate bez decyzji.
-4. Czy zależności WASM są **akceptowalne** w `@ai-devs/agent-boilerplate`, czy wolisz Opcję D (osobny pakiet)?
-5. Czy uzupełnić brakujący `sandbox.agent.md` w submodule lekcji / osobnym PR?
+| # | Pytanie | Decyzja |
+| --- | --- | --- |
+| 1 | Czy homework S02E05 wymaga sandboxa? | **Nie** (`drone` — §3.3). Brak innego zadania z code mode w najbliższym sprincie. |
+| 2 | Scaffold `s02e05` vs moduł opt-in | **Kontekst całego kursu** — domyślnie ReAct; sandbox tylko w lekcji / doc. |
+| 3 | QuickJS vs Deno w boilerplate | **N/A przy Opcji A.** Przy ewentualnym B: rekomendacja research = QuickJS w osobnym pakiecie; Deno pozostaje w lekcji `03_02_code`. |
+| 4 | WASM w core vs osobny pakiet | **Opcja D** na przyszłość (WASM poza `@ai-devs/agent-boilerplate`). |
+| 5 | `sandbox.agent.md` | **Tak** — osobny PR do lekcji (poza tym ticketem). |
 
 ---
 
-## 13. Suggested next steps
+## 13. Next steps (po akceptacji)
 
-1. **Ty:** wybierz ścieżkę z §11 — jeśli akceptujesz §2 (wzorzec OK, opt-in w boilerplate), domyślna to **A** (dokumentacja) lub **B** tylko przy konkretnym zadaniu batch-MCP.
-2. **Po akceptacji research:** `@eversis-implement` → faza **Plan** tylko jeśli wybierzesz B/C/D.
-3. **Implementacja** tylko po akceptacji planu; nowe pakiety — zgodnie z regułami repo, po zgodzie tech lead.
+1. ~~Wybór ścieżki §11~~ → **A** (dokumentacja w README boilerplate).
+2. **Plan:** [sandbox-code-execution.plan.md](sandbox-code-execution.plan.md) — Opcja A (docs + PR lekcji `sandbox.agent.md`).
+3. **Osobny PR:** `lessons/02_05_sandbox/workspace/agents/sandbox.agent.md` (faza E planu).
+4. **Przyszły code mode:** nowy research/plan tylko gdy pojawi się zadanie w `tasks/` wymagające batch MCP (§2.3); wtedy pakiet `@ai-devs/agent-code-mode` (D) + QuickJS, nie Deno w boilerplate.
 
 ---
 

@@ -1,41 +1,34 @@
 {
+  "eversis-collections": {
+    "command": "node",
+    "args": [
+      "/Users/piotrniemirski/Documents/Projects/cursor-collections/mcp/eversis-collections-mcp/dist/index.js"
+    ],
+    "type": "stdio",
+    "env": {
+      "CURSOR_COLLECTIONS_HOME": "/Users/piotrniemirski/Documents/Projects/cursor-collections"
+    }
+  },
   "mcpServers": {
-    "awslabs.aws-api-mcp-server": {
-      "command": "uvx",
+    "eversis-collections": {
+      "command": "node",
       "args": [
-        "awslabs.aws-api-mcp-server@latest"
-      ]
-    },
-    "awslabs.aws-documentation-mcp-server": {
-      "command": "uvx",
-      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+        "/Users/piotrniemirski/Documents/Projects/cursor-collections/mcp/eversis-collections-mcp/dist/index.js"
+      ],
+      "type": "stdio",
       "env": {
-        "FASTMCP_LOG_LEVEL": "ERROR",
-        "AWS_DOCUMENTATION_PARTITION": "aws",
-        "MCP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        "CURSOR_COLLECTIONS_HOME": "/Users/piotrniemirski/Documents/Projects/cursor-collections"
       }
-    },
-    "gcp-gcloud": {
-      "command": "npx",
-      "args": ["-y", "@google-cloud/gcloud-mcp"]
-    },
-    "gcp-observability": {
-      "command": "npx",
-      "args": ["-y", "@google-cloud/observability-mcp"]
-    },
-    "gcp-storage": {
-      "command": "npx",
-      "args": ["-y", "@google-cloud/storage-mcp"]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"],
-      "type": "stdio"
     },
     "context7": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "type": "stdio"
     },
     "sequential-thinking": {
       "command": "npx",
@@ -54,12 +47,6 @@
       "command": "npx",
       "args": ["@sylphx/pdf-reader-mcp"],
       "type": "stdio"
-    },
-    "eversis-collections": {
-      "command": "node",
-      "args": ["third-party/github-collections/mcp/eversis-collections-mcp/dist/index.js"],
-      "type": "stdio"
     }
-  },
-  "inputs": []
+  }
 }

@@ -17,7 +17,7 @@ npm run lesson10:sandbox
 
 1. Connects to an MCP todo server (`servers/todo.ts`) over stdio
 2. Discovers available tools dynamically from the MCP server
-3. Loads an agent template from `workspace/agents/sandbox.agent.md`
+3. Loads an agent template from `workspace/agents/sandbox.agent.md` (committed in this repo)
 4. Runs a task (passed as CLI args or a default demo) through an agentic loop
 5. Tool calls are executed in a sandboxed QuickJS environment
 

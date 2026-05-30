@@ -18,6 +18,10 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Tool discovery (S02E05-inspired, opt-in)** — `createAgent({ toolDiscovery: { enabled: true } })`: meta tools `list_tools`, `describe_tool`, `activate_tools`; dynamic API tool set via `activate_tools`; default core `http_request`, `submit_to_hub`, `finish_task`.
 - **`http_request` tests** — POST without `body` rejected before fetch.
 
+### Documentation
+
+- **Sandbox / code mode (Option A)** — README and `tasks/docs/boilerplate-documentation.md` §5.2.1: three sandbox layers; code execution stays in course lessons (`02_05_sandbox`, `03_02_code`), not in this package. See `docs/specs/sandbox-code-execution/`.
+
 ### Changed
 
 - **`ai.ts`** — optional `temperature`; parses `usage` from Responses API into `ModelResponse`.

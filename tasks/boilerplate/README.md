@@ -175,7 +175,32 @@ const agent = createAgent({
 });
 ```
 
-The runtime injects meta tools and appends guidance from `src/prompts/tool_discovery.md`. Extended tools become callable only after `activate_tools`. Course reference: `lessons/02_05_sandbox` (that lesson also uses QuickJS `execute_code` — not included here).
+The runtime injects meta tools and appends guidance from `src/prompts/tool_discovery.md`. Extended tools become callable only after `activate_tools`. This is **lazy schema loading in ReAct** — it does **not** include `execute_code` or a code sandbox (see below).
+
+---
+
+## Code mode / sandbox (not in boilerplate)
+
+Course homework and typical episodes use **ReAct + direct MCP** (one or a few tool calls per turn). A separate pattern — **code mode** — runs LLM-generated scripts that call many tools inside an isolated runtime; only stdout / errors return to the model context.
+
+| Layer | What it is | Where in this repo |
+| --- | --- | --- |
+| **File sandbox** | Path chroot for reads | `read_file` in boilerplate |
+| **Tool discovery** | Lazy load schemas into the prompt | opt-in `toolDiscovery` above (S02E05-inspired) |
+| **Code execution sandbox** | Run guest JS/TS with MCP bridges | **lessons only** — not shipped in this package |
+
+**This package does not include** `execute_code`, QuickJS, or Deno. That is intentional: code mode adds WASM or external runtimes, hides intermediate steps in logs, and fits batch orchestration (many MCP calls in one script), not the default puzzle / verify-loop tasks.
+
+| Lesson | Mechanism | Use when |
+| --- | --- | --- |
+| [`lessons/02_05_sandbox`](../../lessons/02_05_sandbox/) | QuickJS in-process + meta-tools + `execute_code` | Many MCP calls in one JS script; pairs with S02E05 OM material |
+| [`lessons/03_02_code`](../../lessons/03_02_code/) | Deno subprocess + HTTP bridge | TypeScript, files, PDF generation; needs `deno` installed |
+
+**When ReAct is enough:** ≤5 turns and ≤4 tools in the prompt — stay on default boilerplate (no code mode).
+
+**S02E05 homework (`drone`):** use default boilerplate — vision + HTTP + ReAct + `submit_to_hub`. Details: [sandbox-code-execution research](./docs/specs/sandbox-code-execution/sandbox-code-execution.research.md) §3; [implementation plan](./docs/specs/sandbox-code-execution/sandbox-code-execution.plan.md) (Option A — docs only).
+
+**Future shared module:** if a course task needs code mode in `tasks/`, prefer a separate package (e.g. `@ai-devs/agent-code-mode` with QuickJS), not an extension of the default boilerplate install.
 
 ---
 

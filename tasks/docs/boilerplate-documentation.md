@@ -9,7 +9,7 @@
 
 Projekt opiera się na architekturze modułowej, w której agent jest oddzielony od narzędzi poprzez protokół MCP oraz od modelu językowego poprzez ustandaryzowany adapter.
 
-1. **Wzorzec Agenta:** ReAct (Reasoning and Acting) realizowany w prostej pętli while/for wewnątrz `agent.ts`.
+1. **Wzorzec Agenta:** ReAct (Reasoning and Acting) realizowany w prostej pętli while/for wewnątrz `agent.ts`. **Code mode** (wykonywanie kodu gościa w piaskownicy) nie jest częścią domyślnego pakietu — patrz §5.2.1 i lekcje `lessons/02_05_sandbox`, `lessons/03_02_code`.
 2. **Rozdzielenie Narzędzi:**
 
 - **Natywne:** Funkcje bezpośrednio modyfikujące stan agenta (np. zatrzymanie pętli).
@@ -143,7 +143,31 @@ Epizody mogą włączyć **lazy registration** przez `createAgent({ toolDiscover
 - Meta-narzędzia: `list_tools`, `describe_tool`, `activate_tools` (natywne, wstrzykiwane przez runtime).
 - Domyślne **core** w API od pierwszej tury ReAct: `http_request`, `submit_to_hub`, `finish_task` (nadpisywalne przez `coreToolNames`).
 - Pozostałe MCP pojawiają się w function calling dopiero po `activate_tools`.
-- Bez QuickJS / `execute_code` (wzorzec z `lessons/02_05_sandbox` w wariancie pełnym — osobny research).
+- Pozostałe MCP pojawiają się w function calling dopiero po `activate_tools`.
+- Bez QuickJS / `execute_code` — to warstwa **code mode** (§5.2.1), nie discovery.
+
+### 5.2.1. Code mode / wykonanie kodu (poza pakietem)
+
+Boilerplate **nie** implementuje `execute_code` ani piaskownicy QuickJS/Deno. W kursie wyróżniamy **trzy warstwy** „sandbox”:
+
+| Warstwa | Co izoluje | Gdzie |
+| --- | --- | --- |
+| **Pliki** | Ścieżki odczytu | `read_file` (chroot względem katalogu zadania) |
+| **Discovery** | Rozmiar kontekstu LLM (schematy narzędzi) | opt-in `toolDiscovery` (§5.2) |
+| **Wykonanie kodu** | Runtime gościa (JS/TS) + mosty MCP | **lekcje**, nie `@ai-devs/agent-boilerplate` |
+
+**Kiedy zostawać przy ReAct (domyślnie):** krótki łańcuch narzędzi (typowo ≤5 tur, ≤4 narzędzia w prompcie), zadania oparte na feedbacku z huba, vision + HTTP — np. homework S02E05 `drone`.
+
+**Kiedy code mode (lekcje):** wiele wywołań MCP w jednym skrypcie, duże pośrednie dane poza kontekstem LLM, złożona orchestracja (`for` / `if` w kodzie gościa).
+
+| Lekcja | Mechanizm | Profil |
+| --- | --- | --- |
+| `lessons/02_05_sandbox` | QuickJS (WASM) in-process, meta-narzędzia + `execute_code` | Batch MCP w JavaScript |
+| `lessons/03_02_code` | Deno subprocess + HTTP bridge | TypeScript, pliki, PDF |
+
+**Przyszły współdzielony moduł:** jeśli zadanie w `tasks/` wymaga code mode, preferowany jest **osobny pakiet** (np. `@ai-devs/agent-code-mode`), nie rozszerzenie domyślnej instalacji boilerplate.
+
+Research i plan: `tasks/boilerplate/docs/specs/sandbox-code-execution/`.
 
 ### 5.3. Narzędzia MCP (`src/tools/mcp/`)
 
