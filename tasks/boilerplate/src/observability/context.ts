@@ -5,6 +5,7 @@ export type TracingContext = {
   agentId: string;
   turnNumber: number;
   toolIndex: number;
+  memorySpanIndex: number;
 };
 
 const storage = new AsyncLocalStorage<TracingContext>();
@@ -19,6 +20,7 @@ export async function withAgentContext<T>(
     agentId,
     turnNumber: 0,
     toolIndex: 0,
+    memorySpanIndex: 0,
   };
   return storage.run(ctx, fn);
 }
@@ -52,4 +54,17 @@ export function formatToolName(toolName: string): string {
   const ctx = storage.getStore();
   if (!ctx) return toolName;
   return `${ctx.agentName}/${toolName}#${nextToolIndex()}`;
+}
+
+function nextMemorySpanIndex(): number {
+  const ctx = storage.getStore();
+  if (!ctx) return 1;
+  ctx.memorySpanIndex += 1;
+  return ctx.memorySpanIndex;
+}
+
+export function formatMemoryName(baseName: string): string {
+  const ctx = storage.getStore();
+  if (!ctx) return baseName;
+  return `${ctx.agentName}/${baseName}#${nextMemorySpanIndex()}`;
 }

@@ -81,7 +81,7 @@ export async function runObserver(args: {
     estimatedTokens: estimateTokensRaw(result.observations),
   });
 
-  return result;
+  return { ...result, usage: response.usage };
 }
 
 export function appendObservations(

@@ -131,9 +131,13 @@ input        = ostatni surowy ogon konwersacji
 ```text
 chat-request (trace)
 └── agent
+    ├── memory/observer#N   ← createOmTracingCallbacks (gdy OM + tracing)
+    ├── memory/reflector#N
     ├── generation#N   ← withTracingAdapter on AIAdapter
     └── tool#N         ← dispatchToolCall via TracingRuntime.withTool
 ```
+
+**OM + tracing:** `createObservationalMemoryHooks({ ...createOmTracingCallbacks(tracing) })` — span metadata only (bez XML obserwacji). Spec: `tasks/boilerplate/docs/specs/om-langfuse-spans/`.
 
 **Konfiguracja:** `createAgent({ tracing: createTracingRuntime({ sessionId, agentName }) })`.
 

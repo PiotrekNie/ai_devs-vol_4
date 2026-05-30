@@ -17,6 +17,7 @@ import {
   flushObservationalMemory,
   processObservationalMemory,
 } from "./processor.js";
+import type { OmTracingCallbacks } from "./om-callbacks.js";
 import type {
   MemoryChatFn,
   MemoryState,
@@ -36,6 +37,8 @@ export type ObservationalMemoryHooksOptions = {
   enableCalibration?: boolean;
   /** Inject for tests (defaults to boilerplate `chat`). */
   chatFn?: MemoryChatFn;
+  /** Optional tracing callbacks (e.g. from `createOmTracingCallbacks`). */
+  tracing?: OmTracingCallbacks;
 };
 
 function resolveConfig(
@@ -58,6 +61,7 @@ function resolveConfig(
     enableCalibration: options.enableCalibration ?? true,
     calibrationMinActualTokens: OM_CALIBRATION_MIN_ACTUAL_TOKENS,
     tokenSafetyMargin: OM_TOKEN_SAFETY_MARGIN,
+    tracing: options.tracing,
   };
 }
 
@@ -129,3 +133,10 @@ export function createObservationalMemoryHooks(
 
 export { flushObservationalMemory, processObservationalMemory };
 export type { MemoryState, ObservationalMemoryConfig };
+export type {
+  OmTracingCallbacks,
+  OmObserverStartContext,
+  OmObserverEndContext,
+  OmReflectorStartContext,
+  OmReflectorEndContext,
+} from "./om-callbacks.js";

@@ -12,6 +12,10 @@ import {
   withTrace,
 } from "./tracer.js";
 import { withTracingAdapter } from "./tracing-adapter.js";
+import {
+  createOmTracingCallbacks,
+  withObservationalMemoryTracing,
+} from "./om-tracing.js";
 import type {
   AgentParams,
   ToolParams,
@@ -82,5 +86,7 @@ export {
   shutdownTracing,
   isTracingActive,
   withTracingAdapter,
+  createOmTracingCallbacks,
+  withObservationalMemoryTracing,
 };
 export type { TracingRuntimeOptions, TracingRuntime } from "./types.js";

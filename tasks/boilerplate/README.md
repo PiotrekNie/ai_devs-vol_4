@@ -374,7 +374,42 @@ try {
 }
 ```
 
-**Span hierarchy:** `chat-request` → `agent` → `generation#N` / `tool#N`.
+**Span hierarchy:** `chat-request` → `agent` → `generation#N` / `tool#N` / `memory/observer#N` / `memory/reflector#N` (when OM + tracing enabled).
+
+### OM + Langfuse tracing together
+
+Use the callback port (Wariant 2) — OM stays Langfuse-free; span implementation lives in the observability subpath:
+
+```typescript
+import {
+  createAgent,
+  createAIAdapter,
+  createObservationalMemoryHooks,
+} from "@ai-devs/agent-boilerplate";
+import {
+  initTracing,
+  createTracingRuntime,
+  withTracingAdapter,
+  createOmTracingCallbacks,
+  flushTracing,
+  shutdownTracing,
+} from "@ai-devs/agent-boilerplate/observability";
+
+initTracing({ serviceName: "sXXeYY" });
+const tracing = createTracingRuntime({ sessionId: "run-1", agentName: "episode" });
+const model = "gpt-4o-mini";
+
+const agent = createAgent({
+  ai: withTracingAdapter(createAIAdapter({ model }), model),
+  tracing,
+  memory: createObservationalMemoryHooks({
+    ...createOmTracingCallbacks(tracing),
+  }),
+  // instructions, tools, handlers…
+});
+```
+
+OM spans record **metadata only** (message counts, token estimates, API usage) — not full observation XML. See [om-langfuse-spans research](./docs/specs/om-langfuse-spans/om-langfuse-spans.research.md).
 
 **PII:** traces may contain user queries and tool I/O — apply a **task-level** redaction policy before sending production data to Langfuse. Eval experiments run **locally only** (not in CI). See [agent-observability-evals research](./docs/specs/agent-observability-evals/agent-observability-evals.research.md).
 

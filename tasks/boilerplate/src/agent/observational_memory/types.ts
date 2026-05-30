@@ -3,6 +3,7 @@
  */
 
 import type { ModelResponse } from "../../types/index.js";
+import type { OmTracingCallbacks } from "./om-callbacks.js";
 
 // ── Responses API conversation items ──────────────────────────────────────────
 
@@ -115,6 +116,7 @@ export type ObservationalMemoryConfig = {
   enableCalibration: boolean;
   calibrationMinActualTokens: number;
   tokenSafetyMargin: number;
+  tracing?: OmTracingCallbacks;
 };
 
 export type ProcessedMemoryContext = {
@@ -129,6 +131,7 @@ export type ObserverResult = {
   currentTask?: string;
   suggestedResponse?: string;
   raw: string;
+  usage?: { inputTokens: number; outputTokens: number };
 };
 
 export type ReflectorResult = {
@@ -136,6 +139,7 @@ export type ReflectorResult = {
   tokenCount: number;
   raw: string;
   compressionLevel: number;
+  usage?: { inputTokens: number; outputTokens: number };
 };
 
 export type MemoryChatFn = (params: {

@@ -37,6 +37,15 @@ export async function runReflector(args: {
   );
   let bestRaw = observations;
   let bestLevel = -1;
+  let totalUsage = { inputTokens: 0, outputTokens: 0 };
+
+  const addUsage = (usage?: { inputTokens: number; outputTokens: number }) => {
+    if (!usage) return;
+    totalUsage = {
+      inputTokens: totalUsage.inputTokens + usage.inputTokens,
+      outputTokens: totalUsage.outputTokens + usage.outputTokens,
+    };
+  };
 
   logMemory("reflector", {
     fromTokens: bestTokens,
@@ -64,6 +73,7 @@ export async function runReflector(args: {
       estimatedSafe,
       config.enableCalibration,
     );
+    addUsage(response.usage);
 
     const raw = response.content ?? "";
     const compressed = extractTag(raw, "observations") ?? raw.trim();
@@ -92,6 +102,7 @@ export async function runReflector(args: {
         tokenCount: tokens,
         raw,
         compressionLevel: level,
+        usage: totalUsage,
       };
     }
   }
@@ -107,5 +118,9 @@ export async function runReflector(args: {
     tokenCount: bestTokens,
     raw: bestRaw,
     compressionLevel: bestLevel,
+    usage:
+      totalUsage.inputTokens > 0 || totalUsage.outputTokens > 0
+        ? totalUsage
+        : undefined,
   };
 }

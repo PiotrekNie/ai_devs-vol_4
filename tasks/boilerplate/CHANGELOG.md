@@ -17,7 +17,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Planning phase (turn 0)** — opt-in `enablePlanningPhase` on `createAgent` (see prior unreleased entries).
 - **Tool discovery (S02E05-inspired, opt-in)** — `createAgent({ toolDiscovery: { enabled: true } })`: meta tools `list_tools`, `describe_tool`, `activate_tools`; dynamic API tool set via `activate_tools`; default core `http_request`, `submit_to_hub`, `finish_task`.
 - **`http_request` tests** — POST without `body` rejected before fetch.
-- **Observability (S03E01, opt-in)** — `src/observability/`: Langfuse tracing via subpath `@ai-devs/agent-boilerplate/observability`; `createTracingRuntime`, `withTracingAdapter`, `initTracing`; `createAgent({ tracing })` for agent/generation/tool spans; peer deps Langfuse + OTEL; default off.
+- **Observability (S03E01, opt-in)** — `src/observability/`: Langfuse tracing via subpath `@ai-devs/agent-boilerplate/observability`; `createTracingRuntime`, `withTracingAdapter`, `initTracing`; `createAgent({ tracing })` for agent/generation/tool spans; **`createOmTracingCallbacks`** for OM Observer/Reflector memory spans; peer deps Langfuse + OTEL; default off.
 
 ### Documentation
 

@@ -32,6 +32,7 @@ async function runReflectionIfNeeded(args: {
   chatFn: MemoryChatFn;
 }): Promise<void> {
   const { state, config, chatFn } = args;
+  const tracing = config.tracing;
   const grewSinceReflection =
     state.observationTokenCount - (state.lastReflectionOutputTokens ?? 0);
   const shouldReflect =
@@ -48,7 +49,16 @@ async function runReflectionIfNeeded(args: {
     return;
   }
 
+  const reflectorStart = {
+    obsTokensBefore: state.observationTokenCount,
+    threshold: config.reflectionThresholdTokens,
+    targetTokens: config.reflectionTargetTokens,
+    generation: state.generationCount,
+  };
+
   try {
+    await tracing?.onReflectorStart?.(reflectorStart);
+
     const reflected = await runReflector({
       state,
       config,
@@ -61,6 +71,13 @@ async function runReflectionIfNeeded(args: {
     state.observationTokenCount = reflected.tokenCount;
     state.lastReflectionOutputTokens = reflected.tokenCount;
     state.generationCount += 1;
+
+    await tracing?.onReflectorEnd?.({
+      ...reflectorStart,
+      obsTokensAfter: reflected.tokenCount,
+      compressionLevel: reflected.compressionLevel,
+      usage: reflected.usage,
+    });
 
     state.reflectorLogSeq += 1;
     await persistReflectorLog({
@@ -75,6 +92,11 @@ async function runReflectionIfNeeded(args: {
       calibration: state.calibration,
     });
   } catch (err) {
+    await tracing?.onReflectorEnd?.({
+      ...reflectorStart,
+      obsTokensAfter: state.observationTokenCount,
+      compressionLevel: -1,
+    });
     logError(
       `Observational memory reflector failed: ${err instanceof Error ? err.message : String(err)}`,
     );
@@ -88,11 +110,16 @@ export async function runObservationPass(args: {
   chatFn: MemoryChatFn;
   /** When true, observe all items (flush); otherwise split tail budget. */
   forceAll?: boolean;
+  pendingTokensRaw?: number;
 }): Promise<{ conversation: unknown[]; observed: boolean }> {
   const { state, config, conversation, chatFn, forceAll } = args;
+  const tracing = config.tracing;
   if (conversation.length === 0) {
     return { conversation, observed: false };
   }
+
+  const pendingTokensRaw =
+    args.pendingTokensRaw ?? estimateConversationTokensRaw(conversation);
 
   const tailBudget = Math.max(
     MIN_TAIL_BUDGET,
@@ -103,47 +130,90 @@ export async function runObservationPass(args: {
     : splitByTailBudget(conversation, tailBudget, state.calibration);
   const toObserve = head.length > 0 ? head : conversation;
 
-  const observed = await runObserver({
-    state,
-    config,
-    previousObservations: state.activeObservations,
-    items: toObserve,
-    chatFn,
-  });
+  const observerStart = {
+    messagesSealed: toObserve.length,
+    pendingTokensRaw,
+    threshold: config.observationThresholdTokens,
+    generation: state.generationCount,
+  };
 
-  if (!observed.observations.trim()) {
-    return { conversation, observed: false };
-  }
+  await tracing?.onObserverStart?.(observerStart);
 
-  appendObservations(state, config, observed.observations);
+  try {
+    const observed = await runObserver({
+      state,
+      config,
+      previousObservations: state.activeObservations,
+      items: toObserve,
+      chatFn,
+    });
 
-  state.observerLogSeq += 1;
-  await persistObserverLog({
-    persistDir: config.persistDir,
-    sessionId: state.sessionId,
-    sequence: state.observerLogSeq,
-    observations: observed.observations,
-    tokensRaw: estimateTokensRaw(observed.observations),
-    tokensCalibrated: observationTokenCount(
+    if (!observed.observations.trim()) {
+      await tracing?.onObserverEnd?.({
+        ...observerStart,
+        tailKept: forceAll ? 0 : tail.length,
+        observationLines: 0,
+        obsTokensRaw: 0,
+        obsTokensCalibrated: 0,
+      });
+      return { conversation, observed: false };
+    }
+
+    appendObservations(state, config, observed.observations);
+
+    const obsTokensRaw = estimateTokensRaw(observed.observations);
+    const obsTokensCalibrated = observationTokenCount(
       observed.observations,
       state.calibration,
       config.enableCalibration,
-    ),
-    messagesObserved: toObserve.length,
-    generation: state.generationCount,
-    calibration: state.calibration,
-  });
+    );
+    const observationLines = observed.observations
+      .split("\n")
+      .filter((line) => line.trim()).length;
+    const tailKept = forceAll ? 0 : tail.length;
 
-  logMemory("sealed", {
-    messages: toObserve.length,
-    tailKept: forceAll ? 0 : tail.length,
-    generation: state.generationCount,
-  });
+    await tracing?.onObserverEnd?.({
+      ...observerStart,
+      tailKept,
+      observationLines,
+      obsTokensRaw,
+      obsTokensCalibrated,
+      usage: observed.usage,
+    });
 
-  return {
-    conversation: forceAll ? [] : tail.length > 0 ? tail : conversation,
-    observed: true,
-  };
+    state.observerLogSeq += 1;
+    await persistObserverLog({
+      persistDir: config.persistDir,
+      sessionId: state.sessionId,
+      sequence: state.observerLogSeq,
+      observations: observed.observations,
+      tokensRaw: obsTokensRaw,
+      tokensCalibrated: obsTokensCalibrated,
+      messagesObserved: toObserve.length,
+      generation: state.generationCount,
+      calibration: state.calibration,
+    });
+
+    logMemory("sealed", {
+      messages: toObserve.length,
+      tailKept,
+      generation: state.generationCount,
+    });
+
+    return {
+      conversation: forceAll ? [] : tail.length > 0 ? tail : conversation,
+      observed: true,
+    };
+  } catch (error) {
+    await tracing?.onObserverEnd?.({
+      ...observerStart,
+      tailKept: 0,
+      observationLines: 0,
+      obsTokensRaw: 0,
+      obsTokensCalibrated: 0,
+    });
+    throw error;
+  }
 }
 
 export async function processObservationalMemory(args: {
@@ -186,6 +256,7 @@ export async function processObservationalMemory(args: {
       config,
       conversation,
       chatFn,
+      pendingTokensRaw: pendingTokens,
     });
     conversation = trimmed;
 
