@@ -3,7 +3,8 @@
 Reusable **ReAct agent runtime** for [AI Devs 4](https://aidevs.pl/) course tasks. Provides the wiring that every episode needs — LLM adapter with retry/backoff, MCP tool layer, native tool signals, logger, and an Observer/Reflector memory scaffold — so individual task code stays focused on domain logic.
 
 **Normative spec:** [tasks/docs/boilerplate-documentation.md](../docs/boilerplate-documentation.md)  
-**Release history:** [CHANGELOG.md](./CHANGELOG.md)
+**Release history:** [CHANGELOG.md](./CHANGELOG.md)  
+**Capability map:** [Feature catalog](#feature-catalog) — what is included, opt-in, or outside this package.
 
 ---
 
@@ -180,6 +181,109 @@ const agent = createAgent({
 ```
 
 The runtime injects meta tools and appends guidance from `src/prompts/tool_discovery.md`. Extended tools become callable only after `activate_tools`. This is **lazy schema loading in ReAct** — it does **not** include `execute_code` or a code sandbox (see below).
+
+---
+
+## Feature catalog
+
+Scan the tables below to choose the **minimal** setup for an episode. Detailed examples and env vars stay in the sections linked under **Details**; contracts live in [boilerplate-documentation.md](../docs/boilerplate-documentation.md).
+
+**Availability:** `default` = on whenever you use `createAgent`; `opt-in` = explicit flag or env; `separate package` / `lesson only` = not in `@ai-devs/agent-boilerplate`.
+
+### Core runtime
+
+Always active when you call `createAgent()` (unless noted).
+
+| Feature | Description | Availability | When to use | Details |
+| --- | --- | --- | --- | --- |
+| ReAct loop | Reason → optional tool calls → results in context | default | Every course agent task | [Module map](#module-map) |
+| `MAX_ITERATIONS` guard | Hard cap on ReAct turns; safe message when exceeded | default | Always; tune via `AGENT_MAX_ITERATIONS` | [Environment variables](#2-environment-variables) |
+| Loop exit | (a) text-only answer, (b) `finish_task`, (c) iteration limit | default | Use `finish_task` for explicit completion | [Minimal example](#4-minimal-agent-example) |
+| `processQuery` / `processConversationTurn` | Single-turn vs multi-turn session history | default | Chat-style episodes with follow-ups | `src/agent/agent.ts` |
+| Tool output truncation | Caps chars echoed per tool result into the LLM | default | Large HTTP/file payloads | `AGENT_MAX_TOOL_OUTPUT_CHARS` |
+| Terminal logger | `[MYŚL]`, `[AKCJA]`, `[WYNIK]`, `[SYSTEM]`, `[PLAN]`, `[PAMIĘĆ]` | default | Local debug without Langfuse | `src/utils/logger.ts` |
+| Zod types | `Message`, `ToolCall`, `ModelResponse`, `mcpOk` / `mcpErr` | default | Validation + OpenAI function schemas | `src/types/index.ts` |
+| `config.ts` | Models, limits, hub URL, OM/Langfuse from env | default | Central task configuration | `config.ts`, `tasks/config.js` |
+
+### LLM adapter
+
+| Feature | Description | Availability | When to use | Details |
+| --- | --- | --- | --- | --- |
+| `createAIAdapter` | OpenAI **Responses API**; tool calls + text | default | Standard course LLM (OpenAI / OpenRouter) | [Minimal example](#4-minimal-agent-example) |
+| Exponential backoff | Retries on HTTP **429** and **503** | default | Course APIs and hub (503 is expected) | Shared with `http_request` |
+| `ModelResponse.usage` | Token usage from API when present | default | OM calibration, cost debugging | [Observational Memory](#observational-memory-s02e05) |
+| `ChatOptions` | e.g. `temperature`, `tracingMetadata` | opt-in | Per-call generation control / span metadata | `AgentConfig.chatOptions` |
+| `chat()` | Low-level API call outside the agent loop | default | Tests, OM Observer/Reflector passes | `src/agent/ai.ts` |
+
+### Tools
+
+Register handlers for every tool name exposed to the model. MCP tools come from `createBoilerplateMcpServer()` (extend with `registerTool`).
+
+| Name | Type | Description | Availability | When to use |
+| --- | --- | --- | --- | --- |
+| `http_request` | MCP | GET/POST with 429/503 retry; `{ ok, status, data }` | default | Fetch course APIs, webhooks, JSON |
+| `submit_to_hub` | MCP | POST answer to verification hub; extracts `{FLG:...}` | default | Tasks with hub flag (`HUB_API_KEY`) |
+| `read_file` | MCP | Chunked local text read (`offset`, `limit`) | default | Logs, local data; path sandbox via tool |
+| `analyze_image_vision` | MCP | Vision model Q&A on local image file | default | Maps, screenshots (`AGENT_VISION_MODEL`) |
+| `finish_task` | Native | Ends loop with `final_answer` | default | Model-declared task completion |
+| `ask_human` | Native | Blocks on **stdin** until human replies | default | Missing info, confirmation, CAPTCHA |
+| `list_tools` | Meta | Catalog of tool names + short descriptions | opt-in (`toolDiscovery`) | Many MCP tools in one episode |
+| `describe_tool` | Meta | JSON Schema preview for one tool | opt-in (`toolDiscovery`) | Before `activate_tools` |
+| `activate_tools` | Meta | Exposes selected MCP tools to function calling | opt-in (`toolDiscovery`) | Lazy schema loading |
+
+**Notes:** POST via `http_request` requires a JSON `body`. `submit_to_hub` injects `apikey` from env. Meta tools are **not** a code sandbox — see [Code mode](#code-mode--sandbox-not-in-boilerplate).
+
+### `createAgent` options
+
+| Option | Description | Default | When to enable | See also |
+| --- | --- | --- | --- | --- |
+| `enablePlanningPhase` | Turn 0 plan (`tool_choice: none`); `## Working plan` in instructions; not counted in iterations | `false` | Multi-step tasks; shorten duplicate checklists in episode prompt | [Planning phase](#planning-phase-optional-turn-0) |
+| `toolDiscovery` | Lazy tool schemas; core tools visible from turn 1 | `false` | Many MCP tools (>4 in prompt) | [Tool discovery](#tool-discovery-optional-s02e05-inspired) |
+| `toolDiscovery.coreToolNames` | Tools in API from first ReAct turn | `http_request`, `submit_to_hub`, `finish_task` | Episode-specific core set | Same |
+| `toolDiscovery.autoActivateOnUnknownTool` | Auto-activate inactive tool on call (retry next turn) | `false` | Convenience vs strict context control | Same |
+| `memory` | `MemoryHooks` (`beforeTurn` / `afterTurn`) | `noopMemoryHooks` | Long sessions — use OM factory or custom hooks | [MemoryHooks](#memoryhooks-custom--no-op), [OM](#observational-memory-s02e05) |
+| `tracing` | Langfuse span runtime | noop | Debug runs, costs, evals with traces | [Observability](#observability--langfuse-tracing-s03e01-opt-in) |
+| `maxIterations` / `maxToolOutputChars` | Override env limits | env | Exceptional episodes | [Environment variables](#2-environment-variables) |
+| `chatOptions` | Passed to each `generateResponse` | — | Temperature, tracing metadata | `src/agent/ai.ts` |
+
+Env shortcut: `AGENT_ENABLE_PLANNING=true` enables planning when the flag is omitted on `createAgent`.
+
+### Opt-in extensions (summary)
+
+| Extension | What it does | Do not confuse with |
+| --- | --- | --- |
+| [Planning phase](#planning-phase-optional-turn-0) | Turn 0 working plan before tools | Episode checklist duplicated in prompt |
+| [Tool discovery](#tool-discovery-optional-s02e05-inspired) | Smaller tool schema footprint in context | Code execution / `execute_code` |
+| [Observational Memory](#observational-memory-s02e05) | Observer/Reflector compress **conversation context** (XML observations) | Langfuse **tracing** (records runs for debug) |
+| [Langfuse tracing](#observability--langfuse-tracing-s03e01-opt-in) | `chat-request` → `agent` → generation/tool/memory spans | OM (context size); requires peer deps in **your task** |
+| [MemoryHooks](#memoryhooks-custom--no-op) | Custom `beforeTurn` / `afterTurn` without OM | `createObservationalMemoryHooks()` factory |
+
+Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_discovery.md`, `observer.md`, `reflector.md`.
+
+### Related packages (not in `@ai-devs/agent-boilerplate`)
+
+| Package / location | Purpose | When |
+| --- | --- | --- |
+| [`@ai-devs/agent-evals`](../agent-evals/README.md) | Langfuse datasets, evaluators, `bootstrapExperiment` | Local quality runs after tracing; **not CI** |
+| [`tasks/shared/`](../../shared/) | Course domain helpers (e.g. people fetch/filter) — not agent runtime | Import directly in episode code when needed |
+| [Code mode / sandbox](#code-mode--sandbox-not-in-boilerplate) | QuickJS or Deno guest execution + MCP bridges | Many MCP calls in one script; **lessons only** |
+
+### Quick decision guide
+
+| You need… | Use | Skip |
+| --- | --- | --- |
+| Typical homework (HTTP + hub, few turns) | Default ReAct + 4 MCP + `finish_task` | OM, discovery, tracing, code mode |
+| Many MCP tools in the prompt | `toolDiscovery: { enabled: true }` | Sending every schema on turn 1 |
+| Long multi-turn session | `createObservationalMemoryHooks()` | — |
+| Trace / cost debugging | `@ai-devs/agent-boilerplate/observability` + `LANGFUSE_*` | — |
+| Agent quality experiments | `@ai-devs/agent-evals` (+ tracing optional) | Running evals in CI |
+| Plan before acting | `enablePlanningPhase: true` | Duplicating plan in episode prompt |
+| Human input mid-run | `ask_human` in handlers | — |
+| Images / maps | `analyze_image_vision` | Pasting base64 into main model |
+| Dozens of MCP calls in one step | Lesson [code mode](#code-mode--sandbox-not-in-boilerplate) | `execute_code` in this package |
+| Course domain helpers | [`tasks/shared/`](../../shared/) | — |
+
+**Rule of thumb:** ≤5 ReAct turns and ≤4 tools in the prompt → stay on **default** boilerplate (no discovery, OM, or code mode).
 
 ---
 
