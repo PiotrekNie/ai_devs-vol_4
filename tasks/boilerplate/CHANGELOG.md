@@ -17,14 +17,18 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Planning phase (turn 0)** — opt-in `enablePlanningPhase` on `createAgent` (see prior unreleased entries).
 - **Tool discovery (S02E05-inspired, opt-in)** — `createAgent({ toolDiscovery: { enabled: true } })`: meta tools `list_tools`, `describe_tool`, `activate_tools`; dynamic API tool set via `activate_tools`; default core `http_request`, `submit_to_hub`, `finish_task`.
 - **`http_request` tests** — POST without `body` rejected before fetch.
+- **Observability (S03E01, opt-in)** — `src/observability/`: Langfuse tracing via subpath `@ai-devs/agent-boilerplate/observability`; `createTracingRuntime`, `withTracingAdapter`, `initTracing`; `createAgent({ tracing })` for agent/generation/tool spans; peer deps Langfuse + OTEL; default off.
 
 ### Documentation
 
 - **Sandbox / code mode (Option A)** — README and `tasks/docs/boilerplate-documentation.md` §5.2.1: three sandbox layers; code execution stays in course lessons (`02_05_sandbox`, `03_02_code`), not in this package. See `docs/specs/sandbox-code-execution/`.
+- **Observability & evals (S03E01)** — README observability section; link to `@ai-devs/agent-evals`.
 
 ### Changed
 
 - **`ai.ts`** — optional `temperature`; parses `usage` from Responses API into `ModelResponse`.
+- **`ChatOptions.tracingMetadata`** — optional metadata for Langfuse generation spans.
+- **`createAgent`** — optional `tracing` runtime (default noop); wraps runs in trace/agent spans; tools in tool spans.
 - **Planning turn 0** — `generateResponse` receives **empty tools** (names only in instructions); fixes models that ignored `tool_choice: "none"` and skipped `[PLAN]`.
 - **`ai.ts`** — plan text fallback from `reasoning` / `thought` output items when `output_text` is empty.
 - **`http_request`** — Zod + runtime: POST requires JSON `body` (generic, no zmail constants in boilerplate).

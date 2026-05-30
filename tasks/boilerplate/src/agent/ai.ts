@@ -181,6 +181,8 @@ export type ChatOptions = {
   toolChoice?: "auto" | "none" | "required";
   /** Per-call max_output_tokens override (e.g. planning turn cap). */
   maxOutputTokens?: number;
+  /** Optional metadata attached to Langfuse generation spans (observability). */
+  tracingMetadata?: Record<string, unknown>;
 };
 
 // ── AIAdapter interface ───────────────────────────────────────────────────────

@@ -5,12 +5,30 @@
   "type": "module",
   "private": true,
   "description": "Reusable ReAct agent runtime for AI Devs 4 course tasks",
+  "exports": {
+    ".": "./index.ts",
+    "./observability": "./src/observability/index.ts"
+  },
   "devDependencies": {
+    "@langfuse/otel": "^4.6.1",
+    "@langfuse/tracing": "^4.6.1",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.208.0",
     "@types/bun": "latest",
     "@types/node": "^25.9.0"
   },
   "peerDependencies": {
+    "@langfuse/otel": "^4.6.0",
+    "@langfuse/tracing": "^4.6.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.200.0",
     "typescript": "^5"
+  },
+  "peerDependenciesMeta": {
+    "@langfuse/otel": { "optional": true },
+    "@langfuse/tracing": { "optional": true },
+    "@opentelemetry/api": { "optional": true },
+    "@opentelemetry/sdk-node": { "optional": true }
   },
   "scripts": {
     "test": "bun test",

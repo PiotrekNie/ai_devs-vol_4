@@ -118,6 +118,31 @@ input        = ostatni surowy ogon konwersacji
 
 **Persystencja:** Opcjonalna (`OM_PERSIST_DIR`) — pliki `observer-NNN.md`, `reflector-NNN.md` do debugu.
 
+### 4.4. Observability — Langfuse tracing (S03E01, opt-in)
+
+**Nie mylić z Observational Memory (§4.3).** OM kompresuje kontekst; Langfuse rejestruje trace do debugowania, kosztów i evalów.
+
+**Import:** `@ai-devs/agent-boilerplate/observability` (wymaga peer deps `@langfuse/tracing`, `@langfuse/otel`, OTEL SDK).
+
+**Domyślnie wyłączone** — brak kluczy `LANGFUSE_*` → `initTracing()` no-op; `createAgent` bez `tracing` → `noopTracingRuntime`.
+
+**Hierarchia spanów:**
+
+```text
+chat-request (trace)
+└── agent
+    ├── generation#N   ← withTracingAdapter on AIAdapter
+    └── tool#N         ← dispatchToolCall via TracingRuntime.withTool
+```
+
+**Konfiguracja:** `createAgent({ tracing: createTracingRuntime({ sessionId, agentName }) })`.
+
+**Eval harness:** osobny pakiet [`@ai-devs/agent-evals`](../../agent-evals/README.md) — datasets, evaluators, `bootstrapExperiment`. Eksperymenty **lokalnie**, nie w CI.
+
+**PII:** redakcja danych przed wysyłką do Langfuse — polityka **task-level** (nie wbudowany redactor w boilerplate).
+
+Spec: `tasks/boilerplate/docs/specs/agent-observability-evals/`.
+
 ---
 
 ## 5. Specyfikacja Narzędzi (Tool Definitions)

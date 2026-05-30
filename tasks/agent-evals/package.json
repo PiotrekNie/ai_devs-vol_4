@@ -1,0 +1,31 @@
+{
+  "name": "@ai-devs/agent-evals",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "description": "Langfuse eval harness for AI Devs 4 agent tasks",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit",
+    "example:tool-use": "bun run examples/tool-use.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@langfuse/client": "^4.6.1",
+    "@types/bun": "latest",
+    "@types/node": "^25.9.0"
+  },
+  "peerDependencies": {
+    "@ai-devs/agent-boilerplate": "file:../boilerplate",
+    "@langfuse/client": "^4.6.0",
+    "typescript": "^5"
+  },
+  "peerDependenciesMeta": {
+    "@ai-devs/agent-boilerplate": { "optional": true },
+    "@langfuse/client": { "optional": true }
+  }
+}

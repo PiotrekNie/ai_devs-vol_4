@@ -59,6 +59,10 @@ All keys are optional unless noted; the defaults are shown in [.env.example](./.
 | `OM_MODEL`                               | No                  | `gpt-4o-mini`                   | Model for Observer / Reflector passes            |
 | `OM_PERSIST_DIR`                         | No                  | *(empty)*                       | Debug logs (`observer-NNN.md`); empty = off       |
 | `OM_CALIBRATION_MIN_ACTUAL_TOKENS`       | No                  | `500`                           | Min API tokens before usage calibration applies  |
+| `LANGFUSE_PUBLIC_KEY`                    | For tracing         | —                               | Langfuse public key (opt-in observability)       |
+| `LANGFUSE_SECRET_KEY`                    | For tracing         | —                               | Langfuse secret key                              |
+| `LANGFUSE_BASE_URL`                      | No                  | `https://cloud.langfuse.com`    | Langfuse API URL                                 |
+| `TRACING_SERVICE_NAME`                   | No                  | `@ai-devs/agent-boilerplate`    | OTEL service name for Langfuse traces            |
 
 ### 3. Run the boilerplate tests
 
@@ -244,6 +248,7 @@ tasks/boilerplate/
     │   ├── memory.ts              # MemoryHooks interface + noop default
     │   ├── tool_discovery/        # opt-in list_tools / describe_tool / activate_tools
     │   └── observational_memory/  # createObservationalMemoryHooks (S02E05 OM)
+    │   └── observability/         # Langfuse tracing (S03E01, subpath export)
     ├── mcp/
     │   ├── client.ts              # createMcpClient, listMcpTools, callMcpTool, mcpToolsToOpenAI
     │   └── server.ts              # createBoilerplateMcpServer() — registers 4 default MCP tools
@@ -315,6 +320,63 @@ Set `enableCalibration: false` for raw-only behaviour. Reuse the **same** factor
 **Coexistence:** `## Working plan` (planning phase) and domain journals (e.g. s02e04 mailbox) stay in `instructions`; OM appendix is injected separately — do not strip plan markers in custom hooks.
 
 Logs: `[PAMIĘĆ]` for observer/reflector/seal events. Prompts: `src/prompts/observer.md`, `reflector.md`.
+
+> **Do not confuse** with **Observability (Langfuse tracing, S03E01)** below — OM compresses context; Langfuse records traces for debugging and cost analysis.
+
+---
+
+## Observability — Langfuse tracing (S03E01, opt-in)
+
+**Opt-in** Langfuse tracing for multi-turn ReAct runs. Default behaviour is unchanged (terminal logger only).
+
+| Concept | Package |
+| --- | --- |
+| Context compression (Observer/Reflector) | This package — `createObservationalMemoryHooks` |
+| Trace / generation / tool spans | `@ai-devs/agent-boilerplate/observability` |
+| Eval experiments (datasets) | [`@ai-devs/agent-evals`](../agent-evals/README.md) |
+
+**Peer dependencies** (install in your task when enabling tracing):
+
+```bash
+bun add @langfuse/tracing @langfuse/otel @opentelemetry/sdk-node @opentelemetry/api
+```
+
+```typescript
+import { createAgent, createAIAdapter } from "@ai-devs/agent-boilerplate";
+import {
+  initTracing,
+  flushTracing,
+  shutdownTracing,
+  createTracingRuntime,
+  withTracingAdapter,
+} from "@ai-devs/agent-boilerplate/observability";
+import { DEFAULT_AGENT_MODEL } from "@ai-devs/agent-boilerplate/config.js";
+
+initTracing({ serviceName: "sXXeYY" }); // no-op without LANGFUSE_* keys
+
+const model = DEFAULT_AGENT_MODEL;
+const agent = createAgent({
+  ai: withTracingAdapter(createAIAdapter({ model }), model),
+  instructions: systemPrompt,
+  tools: allTools,
+  handlers,
+  tracing: createTracingRuntime({
+    sessionId: "run-1",
+    agentName: "my-episode",
+  }),
+});
+
+try {
+  await agent.processQuery("Your task");
+} finally {
+  await flushTracing();
+  await shutdownTracing();
+}
+```
+
+**Span hierarchy:** `chat-request` → `agent` → `generation#N` / `tool#N`.
+
+**PII:** traces may contain user queries and tool I/O — apply a **task-level** redaction policy before sending production data to Langfuse. Eval experiments run **locally only** (not in CI). See [agent-observability-evals research](./docs/specs/agent-observability-evals/agent-observability-evals.research.md).
 
 ---
 

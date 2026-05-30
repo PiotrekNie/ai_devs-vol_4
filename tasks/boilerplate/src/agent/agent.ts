@@ -24,6 +24,8 @@ import { runPlanningTurn } from "./planning.js";
 import { setupToolDiscovery, type ToolDiscoveryRuntime } from "./tool_discovery/index.js";
 import type { ToolDiscoveryOptions } from "./tool_discovery/types.js";
 import { FinishTaskSignal } from "../tools/native/finish_task.js";
+import { noopTracingRuntime } from "../observability/noop.js";
+import type { TracingRuntime } from "../observability/types.js";
 import {
   logThought,
   logAction,
@@ -67,6 +69,11 @@ export type AgentConfig = {
   enablePlanningPhase?: boolean;
   /** S02E05-inspired lazy tool registration (opt-in). */
   toolDiscovery?: ToolDiscoveryOptions;
+  /**
+   * Optional Langfuse tracing runtime (opt-in).
+   * Use `createTracingRuntime()` from `@ai-devs/agent-boilerplate/observability`.
+   */
+  tracing?: TracingRuntime;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -107,6 +114,7 @@ async function dispatchToolCall(
   handlers: Record<string, ToolHandler | undefined>,
   maxChars: number,
   discovery?: ToolDiscoveryRuntime | null,
+  tracing: TracingRuntime = noopTracingRuntime,
 ): Promise<{ type: "function_call_output"; call_id: string; output: string }> {
   const args = JSON.parse(call.arguments) as Record<string, unknown>;
   const handler = handlers[call.name];
@@ -140,28 +148,39 @@ async function dispatchToolCall(
 
   logAction(handler.label, call.name, args);
 
-  try {
-    const result = await handler.execute(args);
-    logResult(result);
-    const out = JSON.stringify(result);
-    return {
-      type: "function_call_output",
-      call_id: call.call_id,
-      output: truncateOutput(out, maxChars),
-    };
-  } catch (error) {
-    if (error instanceof FinishTaskSignal) throw error;
+  const runHandler = async (): Promise<{
+    type: "function_call_output";
+    call_id: string;
+    output: string;
+  }> => {
+    try {
+      const result = await handler.execute(args);
+      logResult(result);
+      const out = JSON.stringify(result);
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: truncateOutput(out, maxChars),
+      };
+    } catch (error) {
+      if (error instanceof FinishTaskSignal) throw error;
 
-    logError(error instanceof Error ? error.message : String(error));
-    const errOut = JSON.stringify({
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return {
-      type: "function_call_output",
-      call_id: call.call_id,
-      output: truncateOutput(errOut, maxChars),
-    };
-  }
+      logError(error instanceof Error ? error.message : String(error));
+      const errOut = JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: truncateOutput(errOut, maxChars),
+      };
+    }
+  };
+
+  return tracing.withTool(
+    { name: call.name, input: args, callId: call.call_id },
+    runHandler,
+  );
 }
 
 // ── Agent factory ─────────────────────────────────────────────────────────────
@@ -177,11 +196,17 @@ export function createAgent({
   chatOptions,
   enablePlanningPhase = false,
   toolDiscovery,
+  tracing = noopTracingRuntime,
 }: AgentConfig) {
   const { runtime: discovery, instructions: resolvedInstructions } =
     setupToolDiscovery(toolDiscovery, tools, handlers, instructions);
 
   const loopHandlers = discovery?.handlers ?? handlers;
+  const agentName = tracing.options.agentName ?? "agent";
+  const agentId =
+    tracing.options.agentId ??
+    tracing.options.sessionId ??
+    `agent-${Date.now().toString(36)}`;
 
   async function runLoop(
     conversation: unknown[],
@@ -207,11 +232,28 @@ export function createAgent({
 
       const apiTools = discovery ? discovery.getApiTools() : tools;
 
+      tracing.advanceGenerationTurn({
+        phase: "react",
+        iteration,
+        toolDiscovery: discovery != null,
+        activeToolCount: apiTools.length,
+      });
+
+      const turnChatOptions: ChatOptions = {
+        ...chatOptions,
+        tracingMetadata: {
+          phase: "react",
+          iteration,
+          toolCount: apiTools.length,
+          toolDiscovery: discovery != null,
+        },
+      };
+
       const response = await ai.generateResponse(
         conversation,
         apiTools,
         currentInstructions,
-        chatOptions,
+        turnChatOptions,
       );
 
       if (response.content) {
@@ -252,6 +294,7 @@ export function createAgent({
             loopHandlers,
             maxToolOutputChars,
             discovery,
+            tracing,
           );
           toolResults.push(result);
         } catch (err) {
@@ -300,6 +343,7 @@ export function createAgent({
 
   async function startRun(
     conversation: unknown[],
+    userInput: string,
   ): Promise<{ text: string; nextConversation: unknown[] }> {
     if (!enablePlanningPhase) {
       return runLoop(conversation, resolvedInstructions);
@@ -307,24 +351,58 @@ export function createAgent({
 
     const planningTools = discovery?.allTools ?? tools;
 
+    tracing.advanceGenerationTurn({ phase: "planning" });
+
     const { instructionsWithPlan, conversationAfterPlan } =
       await runPlanningTurn({
         ai,
         conversation,
         instructions: resolvedInstructions,
         tools: planningTools,
-        chatOptions,
+        chatOptions: {
+          ...chatOptions,
+          tracingMetadata: { phase: "planning" },
+        },
         toolDiscoveryEnabled: discovery != null,
       });
 
+    void userInput;
     return runLoop(conversationAfterPlan, instructionsWithPlan);
+  }
+
+  async function executeRun(
+    conversation: unknown[],
+    userInput: string,
+  ): Promise<{ text: string; nextConversation: unknown[] }> {
+    return tracing.withAgent(
+      {
+        name: agentName,
+        agentId,
+        task: userInput,
+      },
+      () => startRun(conversation, userInput),
+    );
   }
 
   return {
     async processQuery(query: string): Promise<string> {
       logQuery(query);
       const conversation: unknown[] = [{ role: "user", content: query }];
-      const { text } = await startRun(conversation);
+      const traceName = tracing.options.traceName ?? "chat-request";
+
+      const { text } = await tracing.withTrace(
+        {
+          name: traceName,
+          sessionId: tracing.options.sessionId,
+          userId: tracing.options.userId,
+          input: query,
+          tags: tracing.options.tags,
+          metadata: tracing.options.metadata,
+        },
+        () => executeRun(conversation, query),
+      );
+
+      tracing.setTraceOutput(text);
       return text;
     },
 
@@ -340,7 +418,22 @@ export function createAgent({
         ...prev,
         { role: "user", content: userMessage },
       ];
-      return startRun(conversation);
+      const traceName = tracing.options.traceName ?? "chat-request";
+
+      const result = await tracing.withTrace(
+        {
+          name: traceName,
+          sessionId: tracing.options.sessionId,
+          userId: tracing.options.userId,
+          input: userMessage,
+          tags: tracing.options.tags,
+          metadata: tracing.options.metadata,
+        },
+        () => executeRun(conversation, userMessage),
+      );
+
+      tracing.setTraceOutput(result.text);
+      return result;
     },
   };
 }

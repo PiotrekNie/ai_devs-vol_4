@@ -145,3 +145,20 @@ export const OM_CALIBRATION_MIN_ACTUAL_TOKENS = posInt(
   "OM_CALIBRATION_MIN_ACTUAL_TOKENS",
   500,
 );
+
+/** Langfuse public key (optional — tracing disabled when absent). */
+export const LANGFUSE_PUBLIC_KEY =
+  process.env["LANGFUSE_PUBLIC_KEY"]?.trim() ?? "";
+
+/** Langfuse secret key (optional). */
+export const LANGFUSE_SECRET_KEY =
+  process.env["LANGFUSE_SECRET_KEY"]?.trim() ?? "";
+
+/** Langfuse API base URL. */
+export const LANGFUSE_BASE_URL =
+  process.env["LANGFUSE_BASE_URL"]?.trim() ?? "https://cloud.langfuse.com";
+
+/** OpenTelemetry service name for Langfuse tracing. */
+export const TRACING_SERVICE_NAME =
+  process.env["TRACING_SERVICE_NAME"]?.trim() ??
+  "@ai-devs/agent-boilerplate";
