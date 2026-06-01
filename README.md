@@ -38,6 +38,7 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s02e03` | `failurecode` — ReAct agent with MCP tools, Observer/Reflector memory |
 | `s03e01` | `evaluation` — sensor anomaly scan + batch classify + hub verify |
 | `s03e02` | `firmware` — ReAct agent + remote shell VM (S03E02) |
+| `s03e03` | `reactor` — deterministic BFS planner, no LLM (S03E03) |
 
 ## Clone (submodules)
 
