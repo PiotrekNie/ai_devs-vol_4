@@ -46,6 +46,36 @@ Multi-agent / heartbeat → lekcja events, nie pakiet kursowy.
 
 **Odniesienia:** [research S03E02](../boilerplate/docs/specs/s03e02-model-constraints/s03e02-model-constraints.research.md) · [przykład epizodu s03e01](../s03e01/)
 
+### 2.2. Contextual feedback (S03E03)
+
+Lekcja S03E03 uczy **integracji agenta z otoczeniem** i kontekstowego feedbacku (metadata, wzbogacanie wiadomości, triggery, proaktywność, hooki workflow). Boilerplate nadal dostarcza **ReAct + MCP**; orchestracja czasu (cron, heartbeat, `tasks.md`) i przeglądarka (Playwright) pozostają **poza** domyślnym pakietem. Poniższa tabela to ściąga przy epizodach w `tasks/sXXeYY/` oraz przy demo w `lessons/03_03_*`.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Stan otoczenia** | Blok `<metadata>` / JSON w **treści wiadomości użytkownika** budowany w kodzie (`run.ts`) | Model „zgaduje” czas, lokalizację lub pogodę bez danych z kodu | [03_03_calendar — `buildMetadata`](../../lessons/03_03_calendar/src/data/environment.ts) |
+| **Wzbogacanie kontekstu** | Narzędzia MCP + ReAct łączące sygnały przed akcją | Osobny moduł „enricher” w boilerplate | [lessons/03_03_calendar](../../lessons/03_03_calendar/) |
+| **Triggery zewnętrzne** | Osobny entrypoint wywołuje ten sam `createAgent` z zadaniem NL | Cron, webhook, heartbeat w `agent.ts` | [lessons/03_02_events](../../lessons/03_02_events/) |
+| **Proaktywność / `tasks.md`** | Długa sesja: OM + orchestrator **poza** pętlą ReAct | Heartbeat i task graph w `@ai-devs/agent-boilerplate` | events; [research S03E02 §2.3](../boilerplate/docs/specs/s03e02-model-constraints/s03e02-model-constraints.research.md) |
+| **Sesja** | `processConversationTurn` gdy wątek ma historię; `processQuery` per izolowany trigger | Wszystkie zdarzenia w jednym przepełnionym kontekście | [`agent.ts`](../boilerplate/src/agent/agent.ts) |
+| **Feedback po błędzie** | `MemoryHooks` + `injectWorkingPlan` po odpowiedzi hub / ban | Osobny runtime tylko po to | [`evaluation_memory.ts`](../s03e01/src/agent/evaluation_memory.ts), [`firmware_memory.ts`](../s03e02/src/agent/firmware_memory.ts) |
+| **Człowiek w pętli** | `ask_human` gdy brak danych (blokada na stdin, bez timeoutu w core) | Wymuszony timeout w pakiecie bez decyzji epizodu | [`ask_human.ts`](../boilerplate/src/tools/native/ask_human.ts) |
+| **Hooki per tool / finish** | Wrapper na `handlers.execute` lub logika w lekcji / epizodzie | Publiczne `beforeToolCall` / `beforeFinish` w `createAgent` | [03_03_language — `hooks.ts`](../../lessons/03_03_language/src/hooks.ts) |
+| **Warstwa pamięci** | `MemoryHooks` = tura ReAct (`beforeTurn` / `afterTurn`); OM opt-in | Mylenie z hookami AI SDK z lekcji language | [`memory.ts`](../boilerplate/src/agent/memory.ts) |
+| **Przeglądarka** | Playwright w **lekcji**; homework hub: HTTP + ewent. vision | Browser MCP / Playwright w default install | [lessons/03_03_browser](../../lessons/03_03_browser/) |
+| **Multi-model w toolu** | Drugi `chat()` / API w implementacji narzędzia MCP epizodu | MCP Sampling w boilerplate | language — narzędzia `listen` / `feedback` |
+| **Homework hub** | Pętla deterministyczna lub ReAct + `http_request`; metadata w prompt gdy potrzeba | Scheduler, browser, coaching hooks z lekcji language | epizody `tasks/sXXeYY/` (np. reactor — osobny wątek) |
+
+**Reguła kciuka:**
+
+```text
+Homework hub (≤5 tur, HTTP/MCP) → default boilerplate + metadata w user message jeśli stan otoczenia jest znany z kodu.
+Orchestracja czasu (cron, webhook runner, heartbeat, tasks.md) → lekcja 03_02_events lub aplikacja poza pakietem.
+Hooki workflow (listen→feedback→save) → lekcja 03_03_language lub kod epizodu — nie nowe API w createAgent.
+Browser / Playwright → lekcja 03_03_browser; pakiet monorepo tylko gdy ≥2 epizody w tasks/ tego wymagają (obecnie: nie).
+```
+
+**Odniesienia:** [research S03E03](../boilerplate/docs/specs/s03e03-contextual-feedback/s03e03-contextual-feedback.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [03_03_calendar](../../lessons/03_03_calendar/) · [03_03_language](../../lessons/03_03_language/) · [03_03_browser](../../lessons/03_03_browser/) · [03_02_events](../../lessons/03_02_events/)
+
 ---
 
 ## 3. Struktura Katalogów (Directory Tree)

@@ -2,12 +2,14 @@
 
 **Task:** Analiza lekcji S03E02 pod kątem opisanych funkcjonalności oraz ocena, czy którekolwiek powinny trafić do `@ai-devs/agent-boilerplate`.
 
-**Data:** 2026-05-30  
-**Status:** Research — **oczekuje akceptacji** przed planem / implementacją.
+**Data:** 2026-05-31 (aktualizacja: lekcje `03_02_*` potwierdzone w repo)  
+**Status:** Research — **oczekuje akceptacji** przed dalszymi krokami (docs-only plan już zrealizowany 2026-05-30).
 
 **Źródła:**
 
 - `markdowns/s03e02-ograniczenia-modeli-na-etapie-zalozen-projektu-1774278041.md` — transkrypt lekcji S03E02
+- `lessons/03_02_email/` — scope isolation, brak wysyłki, evals per activity
+- `lessons/03_02_events/` — heartbeat, kontrakty planu, FS memory, OM per sesja
 - `lessons/03_02_code/` — Deno sandbox + `execute_code` (lekcja)
 - `tasks/boilerplate/README.md` — feature catalog boilerplate
 - `tasks/boilerplate/docs/specs/sandbox-code-execution/` — precedens: sandbox → opt-in, nie core
@@ -43,7 +45,7 @@ Lekcja S03E02 to **projektowanie systemów agentowych pod ograniczenia modeli** 
 | Deterministyczna logika poza modelem | Routing, referencje do dokumentów | **Wzorzec** — realizacja w MCP tools epizodu (jak S03E01 `scan_sensors`) |
 | Human-in-the-loop dla akcji nieodwracalnych | Brak wysyłki maili przez agenta | **Wzorzec** — `ask_human` + brak narzędzia „send” |
 
-### 2.2 Przykład `03_02_email` (lekcja — brak w `lessons/` w tym repo)
+### 2.2 Przykład `03_02_email` (`lessons/03_02_email/`)
 
 | Mechanizm | Opis |
 | --- | --- |
@@ -52,7 +54,7 @@ Lekcja S03E02 to **projektowanie systemów agentowych pod ograniczenia modeli** 
 | Etykiety, priorytety, szkice | Wąski, wspierający zakres vs autonomia |
 | Eksperymenty skuteczności | Eval per aktywność — blisko `@ai-devs/agent-evals`, nie boilerplate |
 
-### 2.3 Przykład `03_02_events` — heartbeat + multi-agent (lekcja — brak w repo)
+### 2.3 Przykład `03_02_events` — heartbeat + multi-agent (`lessons/03_02_events/`)
 
 | Mechanizm | Opis |
 | --- | --- |
@@ -221,8 +223,8 @@ Homework **firmware** = profil pierwszej kategorii (shell + hub, sekwencja komen
 
 ## 8. Assumptions
 
-- Lekcje `03_02_email` i `03_02_events` nie są jeszcze w submodule `lessons/` tego workspace — opis oparty na transkrypcie markdown.
-- Homework bieżącego epizodu to **`firmware`** (shell VM), nie PDF/code mode.
+- Trzy demo lekcji S03E02 są w `lessons/03_02_{email,events,code}/` — osobne runtime’y, nie importowane przez `@ai-devs/agent-boilerplate`.
+- Homework epizodu to **`firmware`** (shell VM) — poza scope tej analizy (osobny wątek).
 - Boilerplate pozostaje **minimalnym runtime ReAct** dla zadań kursowych.
 
 ---
@@ -241,3 +243,4 @@ Homework **firmware** = profil pierwszej kategorii (shell + hub, sekwencja komen
 | Data | Zmiana |
 | --- | --- |
 | 2026-05-30 | Research początkowy — lekcja S03E02 vs boilerplate + weryfikacja S03E01 |
+| 2026-05-31 | Korekta: `lessons/03_02_email` i `03_02_events` obecne w repo; status planu docs-only |
