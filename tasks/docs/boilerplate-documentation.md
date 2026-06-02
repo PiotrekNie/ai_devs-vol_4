@@ -74,7 +74,38 @@ Hooki workflow (listen→feedback→save) → lekcja 03_03_language lub kod epiz
 Browser / Playwright → lekcja 03_03_browser; pakiet monorepo tylko gdy ≥2 epizody w tasks/ tego wymagają (obecnie: nie).
 ```
 
-**Odniesienia:** [research S03E03](../boilerplate/docs/specs/s03e03-contextual-feedback/s03e03-contextual-feedback.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [03_03_calendar](../../lessons/03_03_calendar/) · [03_03_language](../../lessons/03_03_language/) · [03_03_browser](../../lessons/03_03_browser/) · [03_02_events](../../lessons/03_02_events/)
+**Odniesienia:** [research S03E03](../boilerplate/docs/specs/s03e03-contextual-feedback/s03e03-contextual-feedback.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [03_03_calendar](../../lessons/03_03_calendar/) · [03_03_language](../../lessons/03_03_language/) · [03_03_browser](../../lessons/03_03_browser/) · [03_02_events](../../lessons/03_02_events/)
+
+### 2.3. Tool design & test data (S03E04)
+
+Lekcja S03E04 uczy **projektowania skutecznych narzędzi** (schematy input/output, odpowiedzi dla modelu, dane testowe, ewaluacja offline) we współpracy z LLM — **bez** obowiązku MCP w lekcji demonstracyjnej. Runtime boilerplate (`createAgent`, `http_request`, `mcpOk`/`mcpErr`) pozostaje bez zmian; jakość narzędzi implementujesz w **`tasks/sXXeYY/src/tools/mcp/`**. Reference integracji i Promptfoo: **`lessons/03_04_gmail/`**.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Zakres narzędzia** | Wąskie, spersonalizowane akcje (np. `search_support`, nie pełne API) | Generyczne „pełne” integracje z oficjalnym MCP | [§2.1](#21-project-constraints-s03e02); [lessons/03_04_gmail/src/tools/](../../lessons/03_04_gmail/src/tools/) |
+| **Schemat input** | Każde pole z `.describe()`; jawna paginacja (`cursor`, `limit`) | Pola bez opisu; brak stronicowania przy listach | [spec/](../../lessons/03_04_gmail/spec/) w lekcji |
+| **Schemat output** | Poziom szczegółowości (`details`, warianty listy); tylko to, co model potrzebuje | Base64 / duże bloby w `tool_result` | lekcja Gmail; `AGENT_MAX_TOOL_OUTPUT_CHARS` w boilerplate |
+| **Logika w kodzie** | Typ zasobu, merge ID, polityki — **w handlerze**, nie w argumencie modelu | Model wybiera „message vs thread” lub ścieżkę API | `gmail_read` w lekcji |
+| **Feedback po akcji** | `modify` zwraca zmienione pola; puste wyniki → sugestia zmiany zapytania | Cichy błąd lub surowy stack w odpowiedzi narzędzia | [hints/](../../lessons/03_04_gmail/src/hints/) w lekcji |
+| **Envelope `{ data, hint }`** | Eksperyment **w lekcji** (status, recovery, opcjonalny następny krok) | Domyślny format `mcpOk()` w boilerplate; eksport `tool-hints` w pakiecie | [hints/index.ts](../../lessons/03_04_gmail/src/hints/index.ts) |
+| **`nextActions` + confidence** | Tylko reference lekcji (eksperymentalne) | Publiczne API `@ai-devs/agent-boilerplate` | — |
+| **Projektowanie z LLM** | Dokumentacja API + iteracja ze **checklistą** praktyk | Jednorazowy schemat „z pamięci” modelu | transkrypt S03E04; [use-cases.md](../../lessons/03_04_gmail/spec/use-cases.md) |
+| **Dane testowe** | Kategorie: per-tool + scenariusze multi-turn; różnorodność świadomie | Płytkie testy „żeby były”; overfitting do jednego case | [evals/](../../lessons/03_04_gmail/) w lekcji |
+| **Eval offline (narzędzia)** | **Promptfoo** w lekcji — jakość **definicji** narzędzia | Promptfoo w `agent-evals` lub CI boilerplate | [03_04_gmail README](../../lessons/03_04_gmail/README.md) (`eval:*`) |
+| **Eval zachowania agenta** | `@ai-devs/agent-evals` + Langfuse (tracing opcjonalnie) | Mylenie z Promptfoo; eval w CI jako gate | [agent-evals/README.md](../agent-evals/README.md) |
+| **Wybór modelu** | Porównanie na datasetach po ustabilizowaniu schematów | Jeden model „everywhere” bez pomiaru | `AGENT_MODEL`; [research S03E02 §2.1](../boilerplate/docs/specs/s03e02-model-constraints/s03e02-model-constraints.research.md) |
+| **Homework hub (ReAct)** | Prosty JSON/text w MCP; Zod w epizodzie | Envelope Gmail w zadaniach ≤5 tur | [`s03e01`](../s03e01/), [`s03e02`](../s03e02/) |
+| **Homework `negotiations` (osobny profil)** | Osobny temat: HTTP tool dla **zewnętrznego** agenta (NL `params`, limit odpowiedzi) | Wzorzec negotiations w boilerplate | markdown S03E04 — zadanie (poza pakietem) |
+
+**Reguła kciuka:**
+
+```text
+Homework hub (ReAct, ≤5 tur, http_request + własne MCP) → default boilerplate; opisy Zod i krótkie odpowiedzi w narzędziach epizodu.
+Jakość integracji (wiele akcji, bogate hinty) → lekcja 03_04_gmail lub kopia wzorca w epizodzie — nie nowy moduł w pakiecie.
+Eval definicji narzędzi (Promptfoo) → lessons/03_04_gmail; eval trajektorii agenta → agent-evals (Langfuse).
+```
+
+**Odniesienia:** [research S03E04](../boilerplate/docs/specs/s03e04-tool-design-test-data/s03e04-tool-design-test-data.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [03_04_gmail](../../lessons/03_04_gmail/) · [agent-evals](../agent-evals/README.md) · [§4.4 Observability — Langfuse tracing](#44-observability--langfuse-tracing-s03e01-opt-in)
 
 ---
 
