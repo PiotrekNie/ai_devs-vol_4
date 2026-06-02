@@ -1,0 +1,25 @@
+{
+  "name": "@ai-devs/s03e04",
+  "version": "0.1.0",
+  "module": "server.ts",
+  "type": "module",
+  "private": true,
+  "description": "AI Devs 4 — S03E04 negotiations HTTP tools (catalog lookup)",
+  "scripts": {
+    "start": "bun run server.ts",
+    "register": "bun --env-file=../.env run register.ts",
+    "check": "bun --env-file=../.env run check.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "hono": "^4.12.8",
+    "zod": "^4.3.6"
+  }
+}
