@@ -105,7 +105,50 @@ Jakość integracji (wiele akcji, bogate hinty) → lekcja 03_04_gmail lub kopia
 Eval definicji narzędzi (Promptfoo) → lessons/03_04_gmail; eval trajektorii agenta → agent-evals (Langfuse).
 ```
 
-**Odniesienia:** [research S03E04](../boilerplate/docs/specs/s03e04-tool-design-test-data/s03e04-tool-design-test-data.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [03_04_gmail](../../lessons/03_04_gmail/) · [agent-evals](../agent-evals/README.md) · [§4.4 Observability — Langfuse tracing](#44-observability--langfuse-tracing-s03e01-opt-in)
+**Odniesienia:** [research S03E04](../boilerplate/docs/specs/s03e04-tool-design-test-data/s03e04-tool-design-test-data.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [03_04_gmail](../../lessons/03_04_gmail/) · [agent-evals](../agent-evals/README.md) · [§4.4 Observability — Langfuse tracing](#44-observability--langfuse-tracing-s03e01-opt-in)
+
+### 2.4. Non-deterministic models as advantage (S03E05)
+
+Lekcja S03E05 uczy wykorzystania **niedeterminizmu** LLM (szeroka przestrzeń interpretacji, proaktywność, synteza) przy jednoczesnym wyznaczaniu **granic** w kodzie i promptach — architektura kognitywna (CoALA), nie „pełna kontrola skryptem”. Runtime boilerplate (`createAgent`, `http_request`, `toolDiscovery`, `reasoning` w adapterze) **pozostaje bez zmian**; demo `03_05_*` i homework `savethem` realizujesz w lekcjach / epizodzie.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Profil agenta hub** | Wąski ReAct, jawne cele, ≤5 tur, deterministyczna weryfikacja hub | Kopiowanie agenta „świadomego” z lekcji do każdego zadania | [§2.1](#21-project-constraints-s03e02); epizody `tasks/sXXeYY/` |
+| **Szeroka przestrzeń zachowań** | Ogólne instrukcje + metadata + pamięć plikowa; model wybiera **kiedy** działać | Sztywne if/else w prompcie dla każdej sytuacji | [03_05_awareness](../../lessons/03_05_awareness/) |
+| **`think` / `recall`** | Narzędzia „zastanów się” + odkrywanie pamięci | Wymaganie tych narzędzi w boilerplate | [tools.ts](../../lessons/03_05_awareness/src/core/tools.ts) |
+| **Reasoning API** | `reasoning` / `reasoning_effort` per wywołanie w epizodzie (koszt świadomy) | Domyślne `high` dla wszystkich zadań kursu | [`ai.ts`](../boilerplate/src/agent/ai.ts); env epizodu |
+| **Powtarzalność** | Akceptuj podobne wyniki przy tym samym kontekście; testuj trajektorie, nie jeden seed | Traktowanie LLM jak funkcji czystej | [agent-evals](../agent-evals/README.md) (opcjonalnie) |
+| **Hub toolsearch (`savethem`)** | `http_request` POST na hub; angielskie `query`; odkryte API = ten sam kontrakt | Wbudowany MCP `toolsearch` w pakiecie | epizod `s03e05` (planowany); przykład JSON poniżej |
+| **Lazy discovery (lokalne MCP)** | `toolDiscovery: { enabled: true }` gdy wiele proxy-MCP po odkryciu hub | Mylenie z HTTP toolsearch (inny mechanizm) | [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md); [README — Tool discovery](../boilerplate/README.md#tool-discovery-optional-s02e05-inspired) |
+| **Artefakty HTML** | iframe + biblioteki znane modelowi (Tailwind 3, Chart.js…) | Generowanie UI w default boilerplate | [03_05_artifacts](../../lessons/03_05_artifacts/) |
+| **JSON Render** | Stan JSON → szablon; zapis/wczytanie stanu | Pełny HTML z modelu gdy potrzebna kontrola | [03_05_render](../../lessons/03_05_render/) |
+| **MCP Apps** | Host UI + sync stanu po interakcji użytkownika | Playwright / MCP Apps w default install | [03_05_apps](../../lessons/03_05_apps/); [§2.2](#22-contextual-feedback-s03e03) |
+| **Generatywne UI na produkcji** | Balans: artefakt vs JSON vs MCP Apps („kiedy X, kiedy Y”) | Jedna ścieżka „zawsze HTML z LLM” | transkrypt S03E05 |
+| **Homework `savethem`** | ReAct + odkrywanie narzędzi + optymalizacja trasy → tablica ruchów `/verify` | Solver trasy w `createAgent` | markdown S03E05; `submit_to_hub` w boilerplate |
+
+**Reguła kciuka:**
+
+```text
+Homework hub (savethem: trasa, /verify) → default boilerplate + http_request; toolsearch i odkryte endpointy w epizodzie (angielskie query).
+Agent konwersacyjny / think+recall / szerokie prompty → lekcja 03_05_awareness — nie domyślny pakiet.
+Artefakty / JSON Render / MCP Apps → lekcje 03_05_artifacts | _render | _apps — host poza @ai-devs/agent-boilerplate.
+Wiele lokalnych MCP po odkryciu API → toolDiscovery opt-in; HTTP toolsearch ≠ activate_tools, ten sam cel pedagogiczny.
+```
+
+**Przykład — pierwsze wywołanie hub toolsearch w epizodzie `savethem`** (dalsze narzędzia zwraca toolsearch; każde przyjmuje `query` + `apikey`):
+
+```json
+{
+  "url": "https://hub.ag3nts.org/api/toolsearch",
+  "method": "POST",
+  "body": {
+    "apikey": "<HUB_API_KEY>",
+    "query": "movement rules and terrain map"
+  }
+}
+```
+
+**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
 
 ---
 

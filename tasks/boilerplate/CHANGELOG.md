@@ -25,6 +25,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Sandbox / code mode (Option A)** — README and `tasks/docs/boilerplate-documentation.md` §5.2.1: three sandbox layers; code execution stays in course lessons (`02_05_sandbox`, `03_02_code`), not in this package. See `docs/specs/sandbox-code-execution/`.
 - **Observability & evals (S03E01)** — README observability section; link to `@ai-devs/agent-evals`.
 - **S03E04 (tool design & test data)** — §2.3 in `tasks/docs/boilerplate-documentation.md` (tool schema patterns, Promptfoo vs `agent-evals`); README related-package row for `03_04_gmail`.
+- **S03E05 (non-deterministic models)** — §2.4 in `tasks/docs/boilerplate-documentation.md` (cognitive/wide-space vs hub ReAct, generative UI lesson map, `savethem` + toolsearch via `http_request`); README related-package row for `03_05_*`.
 
 ### Changed
 
