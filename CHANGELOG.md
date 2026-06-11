@@ -6,6 +6,7 @@ All notable changes to this repository are documented here.
 
 ### Added
 
+- **`tasks/s03e05/`** — `@ai-devs/s03e05` savethem agent: hybrid ReAct (`hub_query` discovery) + deterministic `plan_route` BFS solver, hub verify `savethem`.
 - **`tasks/s03e03/`** — `@ai-devs/s03e03` reactor solver: deterministic BFS planner (no LLM), hub loop, fixture-calibrated block simulator.
 - **`tasks/s03e02/`** — `@ai-devs/s03e02` firmware agent: ReAct on `@ai-devs/agent-boilerplate`, MCP `shell_exec` (hub VM API), memory hooks after ban/hub errors, Langfuse tracing opt-in.
 - **Git submodule** [`third-party/github-collections`](third-party/github-collections) — tracks `PiotrNie-Eversis/cursor-collections` on **`main`**, with [`scripts/link-cursor-collections.sh`](scripts/link-cursor-collections.sh) and [`scripts/sync-cursor-collections.mjs`](scripts/sync-cursor-collections.mjs) for symlink refresh and bumps.

@@ -39,6 +39,7 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s03e01` | `evaluation` — sensor anomaly scan + batch classify + hub verify |
 | `s03e02` | `firmware` — ReAct agent + remote shell VM (S03E02) |
 | `s03e03` | `reactor` — deterministic BFS planner, no LLM (S03E03) |
+| `s03e05` | `savethem` — hub tool discovery + hybrid route solver (S03E05) |
 
 ## Clone (submodules)
 
