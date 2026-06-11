@@ -267,6 +267,7 @@ Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_di
 | [`@ai-devs/agent-evals`](../agent-evals/README.md) | Langfuse datasets, evaluators, `bootstrapExperiment` | Local quality runs after tracing; **not CI** |
 | [`lessons/03_04_gmail`](../../lessons/03_04_gmail/README.md) | Tool design reference + **Promptfoo** evals (per-tool & scenarios); mocked/live suites | Refining MCP contracts; **not** required for typical hub homework |
 | [`lessons/03_05_*`](../../lessons/03_05_awareness/README.md) | S03E05: awareness (`think`/`recall`) + generative UI demos (artifacts, render, MCP Apps) | Wide-space / non-deterministic agents; **not** default `@ai-devs/agent-boilerplate` |
+| [`lessons/04_01_garden`](../../lessons/04_01_garden/README.md) | S04E01: Digital Garden — Daytona sandbox, skills/workflows, static site publish | Production-style deployment demo; **not** `@ai-devs/agent-boilerplate` |
 | [`tasks/shared/`](../../shared/) | Course domain helpers (e.g. people fetch/filter) — not agent runtime | Import directly in episode code when needed |
 | [Code mode / sandbox](#code-mode--sandbox-not-in-boilerplate) | QuickJS or Deno guest execution + MCP bridges | Many MCP calls in one script; **lessons only** |
 
@@ -281,6 +282,7 @@ Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_di
 | Agent quality experiments | `@ai-devs/agent-evals` (+ tracing optional) | Running evals in CI |
 | Design or refine MCP tool schemas & offline tool evals | [§2.3 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#23-tool-design--test-data-s03e04) + lesson `03_04_gmail` | `tool-hints` package export (not planned) |
 | Wide behavioral space or hub `toolsearch` homework (`savethem`) | [§2.4 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#24-non-deterministic-models-as-advantage-s03e05) + episode MCP/`http_request` | `think`/`recall`/UI host in boilerplate package |
+| Production deployment / Digital Garden (terminal, git, publish) | [§2.5 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#25-production-deployments-s04e01) + lesson `04_01_garden` | Daytona, `git_push`, skills in boilerplate package |
 | Plan before acting | `enablePlanningPhase: true` | Duplicating plan in episode prompt |
 | Human input mid-run | `ask_human` in handlers | — |
 | Images / maps | `analyze_image_vision` | Pasting base64 into main model |

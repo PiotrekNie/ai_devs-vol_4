@@ -148,7 +148,40 @@ Wiele lokalnych MCP po odkryciu API → toolDiscovery opt-in; HTTP toolsearch �
 }
 ```
 
-**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
+**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
+
+### 2.5. Production deployments (S04E01)
+
+Lekcja S04E01 uczy **wdrażania** rozwiązań AI: oczekiwania vs ograniczenia, współpraca synchroniczna vs asynchroniczna, balans kodu i modelu oraz szybkie testy hipotez przed pełnym produktem. Runtime boilerplate (`createAgent`, MCP, `http_request`, `/verify`) **pozostaje bez zmian** dla typowych epizodów hub; referencyjna aplikacja **Cyfrowy Ogród** (`04_01_garden`) to osobna lekcja, nie rozszerzenie pakietu.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Profil systemu** | Epizod hub: wąski ReAct, `http_request`, `/verify`, brak mutacji repo | Kopiowanie `04_01_garden` do każdego `tasks/sXXeYY/` | [§2.1](#21-project-constraints-s03e02); epizody `tasks/` |
+| **Wdrożenie produkcyjne** | Dogfooding, iteracje, jawne „czego nie robimy” | „Pełna automatyzacja” bez guardów | lekcja S04E01; [04_01_garden](../../lessons/04_01_garden/) |
+| **Oczekiwania vs rzeczywistość** | Limity kontekstu/kosztu w MCP i promptach | Obietnica „dowolnej automatyzacji” w core | [§2.1](#21-project-constraints-s03e02) |
+| **Sync (człowiek w pętli)** | `ask_human`, krótka sesja, nadzór przy destrukcyjnych akcjach | Terminal/git w default pakiecie | [`ask_human`](../boilerplate/src/tools/native/ask_human.ts); [§2.2](#22-contextual-feedback-s03e03) |
+| **Async (tło)** | Osobny entrypoint, cron, `tasks.md` | Heartbeat w `createAgent` | [03_02_events](../../lessons/03_02_events/) |
+| **Balans kod / AI** | Deterministyczna logika w MCP TypeScript | Model wybiera ścieżkę API / merge ID | [§2.1](#21-project-constraints-s03e02) |
+| **Sandbox plików (hub)** | `read_file` chroot, chunking | `write_file` / shell w core | [§5.2.1](#521-code-mode--wykonanie-kodu-poza-pakietem) |
+| **Sandbox wykonania** | Lekcja: QuickJS, Deno lub **Daytona** (garden) | `execute_code` w default install | [02_05_sandbox](../../lessons/02_05_sandbox/); [03_02_code](../../lessons/03_02_code/); [04_01_garden](../../lessons/04_01_garden/) |
+| **Code mode (garden)** | Node w VM + `codemode.vault.*` w lekcji | Wbudowany code mode w boilerplate | [code-mode.ts](../../lessons/04_01_garden/src/tools/code-mode.ts) |
+| **Skills / workflows** | `SKILL.md`, `/invoke`, workflows w hoście aplikacji | Publiczne API skills w `createAgent` | [04_01_garden/vault/system/](../../lessons/04_01_garden/vault/system/) |
+| **Publikacja treści** | CI (GitHub Actions) + static site poza agentem | `git_push` w MCP kursu | garden [`.github/workflows/`](../../lessons/04_01_garden/.github/workflows/) |
+| **Static site (grove)** | MD → HTML w kodzie buildera | Generowanie HTML z modelu w boilerplate | [grove/](../../lessons/04_01_garden/grove/) |
+| **Test hipotez** | Frontmatter w MD, dataset + eval przed chatbotem | Pełny RAG/chat „na wszelki wypadek” | [§2.3](#23-tool-design--test-data-s03e04); [agent-evals](../agent-evals/README.md) |
+| **Dostępność wiedzy** | Wyszukiwarka / link do dokumentu | Obowiązkowy chatbot | decyzja produktowa — docs |
+| **`@ai-devs/agent-garden`** | Defer — osobny pakiet gdy ≥2 epizody | Port garden do core boilerplate | [research S04E01](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md) |
+
+**Reguła kciuka:**
+
+```text
+Epizod hub (HTTP, ≤5 tur, brak mutacji repo) → default boilerplate.
+Wdrożenie jak Digital Garden (terminal, git, publikacja, skills) → lessons/04_01_garden — nie rozszerzaj pakietu.
+Orchestracja czasu / agenci w tle → lessons/03_02_events — nie createAgent.
+Potrzebujesz write/terminal → lekcja garden lub epizod z jawnymi guardami — nie core.
+```
+
+**Odniesienia:** [research S04E01](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [04_01_garden](../../lessons/04_01_garden/) · [03_02_events](../../lessons/03_02_events/) · [sandbox-code-execution research](../boilerplate/docs/specs/sandbox-code-execution/sandbox-code-execution.research.md)
 
 ---
 
@@ -325,10 +358,11 @@ Boilerplate **nie** implementuje `execute_code` ani piaskownicy QuickJS/Deno. W 
 | --- | --- | --- |
 | `lessons/02_05_sandbox` | QuickJS (WASM) in-process, meta-narzędzia + `execute_code` | Batch MCP w JavaScript |
 | `lessons/03_02_code` | Deno subprocess + HTTP bridge | TypeScript, pliki, PDF |
+| `lessons/04_01_garden` | Daytona (zdalny VM), `terminal`, `code_mode`, sync `vault/` | Wdrożeniowy Digital Garden; publikacja przez CI — **nie** profil homework hub |
 
-**Przyszły współdzielony moduł:** jeśli zadanie w `tasks/` wymaga code mode, preferowany jest **osobny pakiet** (np. `@ai-devs/agent-code-mode`), nie rozszerzenie domyślnej instalacji boilerplate.
+**Przyszły współdzielony moduł:** jeśli zadanie w `tasks/` wymaga code mode, preferowany jest **osobny pakiet** (np. `@ai-devs/agent-code-mode`), nie rozszerzenie domyślnej instalacji boilerplate. Profil wdrożeniowy (terminal, git, skills) mapuj na [§2.5](#25-production-deployments-s04e01) i lekcję `04_01_garden` — nie na `@ai-devs/agent-boilerplate`.
 
-Research i plan: `tasks/boilerplate/docs/specs/sandbox-code-execution/`.
+Research i plan: `tasks/boilerplate/docs/specs/sandbox-code-execution/` · [S04E01 production deployments](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md).
 
 ### 5.3. Narzędzia MCP (`src/tools/mcp/`)
 
