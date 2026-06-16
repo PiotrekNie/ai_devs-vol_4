@@ -47,4 +47,8 @@ This repository uses **Cursor Collections (Eversis)** as a **Git submodule** at 
 
 - Check that symlinks match the submodule **without** fetching (fails if `.cursor/` is out of sync with the submodule): `node scripts/sync-cursor-collections.mjs --check-only`.
 
+### MCP: `spawn npx ENOENT` (macOS)
+
+Cursor does not inherit your shell `PATH` (nvm, Homebrew). Stdio MCP entries use [`scripts/mcp-run.sh`](scripts/mcp-run.sh) to discover `node`/`npx` before starting. See [`scripts/README.md`](scripts/README.md#mcp-path-wrapper-mcp-runsh). Restart MCP after editing `.cursor/mcp.json`.
+
 Open the **repository root** as the Cursor workspace so MCP and paths resolve correctly.

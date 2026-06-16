@@ -1,38 +1,32 @@
 {
-  "eversis-collections": {
-    "command": "node",
-    "args": [
-      "/Users/piotrniemirski/Documents/Projects/cursor-collections/mcp/eversis-collections-mcp/dist/index.js"
-    ],
-    "type": "stdio",
-    "env": {
-      "CURSOR_COLLECTIONS_HOME": "/Users/piotrniemirski/Documents/Projects/cursor-collections"
-    }
-  },
   "mcpServers": {
     "eversis-collections": {
-      "command": "node",
+      "command": "/bin/bash",
       "args": [
-        "/Users/piotrniemirski/Documents/Projects/cursor-collections/mcp/eversis-collections-mcp/dist/index.js"
+        "scripts/mcp-run.sh",
+        "node",
+        "third-party/github-collections/mcp/eversis-collections-mcp/dist/index.js"
       ],
-      "type": "stdio",
-      "env": {
-        "CURSOR_COLLECTIONS_HOME": "/Users/piotrniemirski/Documents/Projects/cursor-collections"
-      }
+      "type": "stdio"
     },
     "context7": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@latest"]
+      "command": "/bin/bash",
+      "args": ["scripts/mcp-run.sh", "npx", "-y", "@upstash/context7-mcp@latest"]
     },
     "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"],
+      "command": "/bin/bash",
+      "args": ["scripts/mcp-run.sh", "npx", "-y", "@playwright/mcp@latest"],
       "type": "stdio"
     },
     "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "command": "/bin/bash",
+      "args": [
+        "scripts/mcp-run.sh",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
       "type": "stdio"
     },
     "figma": {
@@ -44,8 +38,8 @@
       "type": "http"
     },
     "pdf-reader": {
-      "command": "npx",
-      "args": ["@sylphx/pdf-reader-mcp"],
+      "command": "/bin/bash",
+      "args": ["scripts/mcp-run.sh", "npx", "-y", "@sylphx/pdf-reader-mcp"],
       "type": "stdio"
     }
   }
