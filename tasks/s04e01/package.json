@@ -1,0 +1,29 @@
+{
+  "name": "@ai-devs/s04e01",
+  "version": "0.1.0",
+  "module": "run.ts",
+  "type": "module",
+  "private": true,
+  "description": "AI Devs 4 — S04E01 okoeditor (OKO hub API ReAct agent)",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "start": "bun --env-file=../.env run run.ts",
+    "probe": "bun --env-file=../.env run scripts/probe-oko.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-devs/agent-boilerplate": "file:../boilerplate",
+    "@langfuse/otel": "^4.6.1",
+    "@langfuse/tracing": "^4.6.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.208.0",
+    "zod": "^4.3.6"
+  }
+}
