@@ -40,6 +40,7 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s03e02` | `firmware` — ReAct agent + remote shell VM (S03E02) |
 | `s03e03` | `reactor` — deterministic BFS planner, no LLM (S03E03) |
 | `s03e05` | `savethem` — hub tool discovery + hybrid route solver (S03E05) |
+| `s04e02` | `windpower` — async hub orchestrator, no LLM (S04E02) |
 
 ## Clone (submodules)
 
