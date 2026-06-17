@@ -148,7 +148,7 @@ Wiele lokalnych MCP po odkryciu API → toolDiscovery opt-in; HTTP toolsearch �
 }
 ```
 
-**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
+**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
 
 ### 2.5. Production deployments (S04E01)
 
@@ -181,7 +181,38 @@ Orchestracja czasu / agenci w tle → lessons/03_02_events — nie createAgent.
 Potrzebujesz write/terminal → lekcja garden lub epizod z jawnymi guardami — nie core.
 ```
 
-**Odniesienia:** [research S04E01](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [04_01_garden](../../lessons/04_01_garden/) · [03_02_events](../../lessons/03_02_events/) · [sandbox-code-execution research](../boilerplate/docs/specs/sandbox-code-execution/sandbox-code-execution.research.md)
+**Odniesienia:** [research S04E01](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [04_01_garden](../../lessons/04_01_garden/) · [03_02_events](../../lessons/03_02_events/) · [sandbox-code-execution research](../boilerplate/docs/specs/sandbox-code-execution/sandbox-code-execution.research.md)
+
+### 2.6. Active collaboration with AI (S04E02)
+
+Lekcja S04E02 uczy **aktywnej współpracy z AI**: wybór kanału dostarczenia agenta (CLI, MCP w kliencie, komunikator, dedykowany UI), ograniczenia hostów MCP oraz personalizacji po stronie **hosta aplikacji** (profile, skills, meta-prompty). Runtime boilerplate (`createAgent`, serwer MCP in-process, `ask_human`) **pozostaje bez zmian** dla typowych epizodów hub; pełna kontrola UX, profile i multi-agent wymagają warstwy poza pakietem. Na rynku pojawia się też **Agent Client Protocol (ACP)** — standard host↔agent w IDE (np. JetBrains, Zed); to decyzja hosta, nie moduł kursowy.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Kanał dostarczenia (hub)** | MCP serwer epizodu + klient IDE (Cursor, Claude Code) | Klon ChatGPT / Slack w każdym `tasks/sXXeYY/` | [`server.ts`](../boilerplate/src/mcp/server.ts); §2.6 |
+| **CLI (dev)** | Agenci kodowania na maszynie użytkownika lub zdalnym sandboxie | `terminal` w default MCP pakietu | [§2.5](#25-production-deployments-s04e01); [04_01_garden](../../lessons/04_01_garden/) |
+| **MCP jako integracja** | Wąskie narzędzia + JSON w odpowiedzi; logika w opisach MCP | Pełna aplikacja ukryta w jednym narzędziu | [§2.3](#23-tool-design--test-data-s03e04) |
+| **Własny interfejs** | Gdy potrzebujesz uprawnień, statusu tła, UX potwierdzeń | Założenie, że MCP w Claude.ai zawsze wystarczy | aplikacja poza pakietem |
+| **Ograniczenia hosta MCP** | Świadomość braku samplingu / słabej kontroli system prompt | MCP Sampling w default serwerze kursu | [research S03E03](../boilerplate/docs/specs/s03e03-contextual-feedback/s03e03-contextual-feedback.research.md); [§2.2](#22-contextual-feedback-s03e03) |
+| **MCP Apps (postęp UI)** | Host z Apps + sync stanu po interakcji użytkownika | MCP Apps w `@ai-devs/agent-boilerplate` | [§2.4](#24-non-deterministic-models-as-advantage-s03e05); [03_05_apps](../../lessons/03_05_apps/) |
+| **Komunikator (Slack itd.)** | Bot / webhook → ten sam backend agenta | Pełny agent w boilerplate | epizod / osobna app |
+| **Profile / subagenci / skills** | Host ładuje `SKILL.md`, subset narzędzi | Publiczne API skills w `createAgent` | [§2.5](#25-production-deployments-s04e01); [04_01_garden](../../lessons/04_01_garden/) |
+| **Meta-prompty (produkt)** | Osobny flow onboardingowy; generowanie instrukcji z rozmowy | Meta-prompt engine w pakiecie | [`planning.ts`](../boilerplate/src/agent/planning.ts); Cursor `@eversis-*` |
+| **Multi-agent** | Orchestrator wywołuje workerów / wiele `processQuery` | Jeden ReAct „udaje zespół” | [03_02_events](../../lessons/03_02_events/) |
+| **Sync z człowiekiem** | `ask_human`, krótka sesja hub | Blokada stdin jako substytut UI web | [`ask_human`](../boilerplate/src/tools/native/ask_human.ts) |
+| **Mikro-akcja** | Skrypt + skrót gdy jeden krok | Agent na każdą transformację tekstu | poza repo kursu |
+| **ACP** | Standard host↔agent (IDE) — świadomość rynku | Implementacja ACP w boilerplate | docs §2.6 |
+
+**Reguła kciuka:**
+
+```text
+Epizod hub (verify, krótka sesja) → default boilerplate + MCP dla klienta IDE.
+Potrzebujesz kontroli UX, profili, statusu tła → własny host lub lekcja — nie rozszerzaj createAgent.
+Chcesz meta-prompt produktowy → osobny prompt/flow — nie moduł w @ai-devs/agent-boilerplate.
+Multi-agent / praca w tle → orchestrator poza pętlą ReAct (03_02_events) — nie agent.ts.
+```
+
+**Odniesienia:** [research S04E02](../boilerplate/docs/specs/s04e02-active-collaboration/s04e02-active-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [03_02_events](../../lessons/03_02_events/) · [03_05_apps](../../lessons/03_05_apps/) · [04_01_garden](../../lessons/04_01_garden/) · transkrypt: `markdowns/s04e02-aktywna-wspolpraca-z-ai-1774908365.md`
 
 ---
 
@@ -363,6 +394,8 @@ Boilerplate **nie** implementuje `execute_code` ani piaskownicy QuickJS/Deno. W 
 **Przyszły współdzielony moduł:** jeśli zadanie w `tasks/` wymaga code mode, preferowany jest **osobny pakiet** (np. `@ai-devs/agent-code-mode`), nie rozszerzenie domyślnej instalacji boilerplate. Profil wdrożeniowy (terminal, git, skills) mapuj na [§2.5](#25-production-deployments-s04e01) i lekcję `04_01_garden` — nie na `@ai-devs/agent-boilerplate`.
 
 Research i plan: `tasks/boilerplate/docs/specs/sandbox-code-execution/` · [S04E01 production deployments](../boilerplate/docs/specs/s04e01-production-deployments/s04e01-production-deployments.research.md).
+
+Gdy API zadania jest **asynchroniczne** (kolejka + poll, wiele równoległych requestów), preferuj **deterministyczną orchestrację w TypeScript** w entrypoincie epizodu lub code mode w lekcji — zamiast wielu tur ReAct czekających na LLM. Pakiet `@ai-devs/agent-boilerplate` **nie** wykonuje narzędzi równolegle w jednej turze modelu; to nie blokuje równoległości w kodzie epizodu poza pętlą agenta. Mapowanie kanału współpracy (CLI, MCP host, własny UI): [§2.6](#26-active-collaboration-with-ai-s04e02).
 
 ### 5.3. Narzędzia MCP (`src/tools/mcp/`)
 
