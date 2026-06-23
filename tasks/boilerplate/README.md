@@ -284,6 +284,7 @@ Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_di
 | Wide behavioral space or hub `toolsearch` homework (`savethem`) | [§2.4 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#24-non-deterministic-models-as-advantage-s03e05) + episode MCP/`http_request` | `think`/`recall`/UI host in boilerplate package |
 | Production deployment / Digital Garden (terminal, git, publish) | [§2.5 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#25-production-deployments-s04e01) + lesson `04_01_garden` | Daytona, `git_push`, skills in boilerplate package |
 | Active collaboration / interface choice (CLI, MCP host, custom UI) | [§2.6 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#26-active-collaboration-with-ai-s04e02) | Chat UI, Slack bot, skills loader in boilerplate package |
+| Contextual work / background agents (calendar, mail, KPI, isolation) | [§2.7 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#27-contextual-collaboration-in-daily--business-workflows-s04e03) | Scheduler, SaaS integrations, subAgents API in boilerplate package |
 | Plan before acting | `enablePlanningPhase: true` | Duplicating plan in episode prompt |
 | Human input mid-run | `ask_human` in handlers | — |
 | Images / maps | `analyze_image_vision` | Pasting base64 into main model |

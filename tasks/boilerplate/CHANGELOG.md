@@ -28,6 +28,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **S03E05 (non-deterministic models)** — §2.4 in `tasks/docs/boilerplate-documentation.md` (cognitive/wide-space vs hub ReAct, generative UI lesson map, `savethem` + toolsearch via `http_request`); README related-package row for `03_05_*`.
 - **S04E01 (production deployments)** — §2.5 in `tasks/docs/boilerplate-documentation.md` (hub vs deployment profile, Digital Garden lesson map, sync/async, hypothesis testing); §5.2.1 Daytona row; README rows for `04_01_garden`; `lessons/04_01_garden/README.md`.
 - **S04E02 (active collaboration)** — §2.6 in `tasks/docs/boilerplate-documentation.md` (interface channels CLI/MCP/messenger/custom, MCP host limits, meta-prompts pattern, multi-agent outside ReAct); §5.2.1 async orchestration note; README Quick decision row.
+- **S04E03 (contextual collaboration)** — §2.7 in `tasks/docs/boilerplate-documentation.md` (background AI, SaaS integration patterns, agent isolation, system self-observation); README Quick decision row; `agent-evals/README.md` system self-observation section.
 
 ### Changed
 

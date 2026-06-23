@@ -118,6 +118,25 @@ Templates: `templates/datasets/*.json` (from lesson `03_01_evals`).
 
 ---
 
+## System self-observation (S04E03)
+
+Lesson **S04E03** describes **meta-agents** that audit whether background automation still delivers value — for example whether a daily digest is read, or whether monitored RSS sources return HTTP errors. This is the same *LLM-as-judge* idea as [S03E01 observability](../boilerplate/docs/specs/agent-observability-evals/agent-observability-evals.research.md), applied to **system health**, not a single homework trajectory.
+
+**Pattern (do this):**
+
+1. A **periodic worker** (cron, heartbeat — see [§2.7](../docs/boilerplate-documentation.md#27-contextual-collaboration-in-daily--business-workflows-s04e03) and `lessons/03_02_events/`) collects metrics (open rates, broken URLs, queue depth).
+2. Build a **user message** with JSON metrics + a short audit instruction.
+3. Call `createAgent().processQuery(...)` (or a single `chat()` pass) → recommendation: disable a process, remove a source, or escalate to a human.
+4. Optionally persist cases to a Langfuse dataset and score audit rules offline with `responseCorrectnessEvaluator`.
+
+**Anti-pattern:** running self-observation hooks inside every ReAct turn of a production agent — that belongs in a **separate** worker, not in `@ai-devs/agent-boilerplate` core.
+
+**PII:** redact user identifiers before sending audit payloads to Langfuse (see [Environment](#environment)).
+
+Normative course guidance: [§2.7 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#27-contextual-collaboration-in-daily--business-workflows-s04e03).
+
+---
+
 ## Tests
 
 ```bash

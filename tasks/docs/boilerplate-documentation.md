@@ -212,7 +212,36 @@ Chcesz meta-prompt produktowy → osobny prompt/flow — nie moduł w @ai-devs/a
 Multi-agent / praca w tle → orchestrator poza pętlą ReAct (03_02_events) — nie agent.ts.
 ```
 
-**Odniesienia:** [research S04E02](../boilerplate/docs/specs/s04e02-active-collaboration/s04e02-active-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [03_02_events](../../lessons/03_02_events/) · [03_05_apps](../../lessons/03_05_apps/) · [04_01_garden](../../lessons/04_01_garden/) · transkrypt: `markdowns/s04e02-aktywna-wspolpraca-z-ai-1774908365.md`
+**Odniesienia:** [research S04E02](../boilerplate/docs/specs/s04e02-active-collaboration/s04e02-active-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [03_02_events](../../lessons/03_02_events/) · [03_05_apps](../../lessons/03_05_apps/) · [04_01_garden](../../lessons/04_01_garden/) · transkrypt: `markdowns/s04e02-aktywna-wspolpraca-z-ai-1774908365.md`
+
+### 2.7. Contextual collaboration in daily & business workflows (S04E03)
+
+Lekcja S04E03 rozwija **kontekstową współpracę z AI w codzienności i biznesie** — integracje API-first, agenci działający w tle, izolacja obszarów odpowiedzialności oraz samonadzór systemu (evals / LLM-judge). To uzupełnienie [§2.2](#22-contextual-feedback-s03e03) (mechanika kontekstu) i [§2.6](#26-active-collaboration-with-ai-s04e02) (kanał współpracy). Runtime boilerplate (`createAgent`, MCP, `http_request`) **pozostaje bez zmian**; orchestracja czasu, integracje SaaS i meta-agenci audytujący to **warstwa aplikacji** poza pakietem.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **AI w tle** | Osobny entrypoint + ten sam `createAgent` | Jeden wieczny ReAct na cały biznes | [03_02_events](../../lessons/03_02_events/); [§2.5](#25-production-deployments-s04e01) |
+| **Integracja SaaS** | Wąskie MCP + `http_request`; scope w handlerze | Pełne API w jednym narzędziu | [§2.3](#23-tool-design--test-data-s03e04); epizod |
+| **Uprawnienia** | Read-only KB; wysyłka tylko do ownera | Model z pełnym dostępem API | env + MCP epizodu |
+| **Powiadomienia** | Tylko gdy istotne; zbiorcze digesty | Agent produkujący szum | prompt + orchestrator |
+| **Aktywne katalogi** | Folder → worker → kolejny etap | Watchery w `createAgent` | [04_01_garden](../../lessons/04_01_garden/) |
+| **Metadata urządzenia** | JSON / `<metadata>` w user message | Model zgaduje DND/geo | [03_03_calendar](../../lessons/03_03_calendar/) |
+| **Izolacja agentów** | 1 obszar = 1 agent/worker | Wspólna pamięć wszystkich ról | §2.7; [02_04_ops](../../lessons/02_04_ops/) gdy sync |
+| **Komunikacja agentów** | Tylko gdy zadanie wymaga współdzielenia | Domyślny graf zależności | S02E04; `delegate` w ops |
+| **Samonadzór systemu** | Cykliczny audit + evals / LLM-judge | Hook w każdej turze ReAct | [agent-evals](../../agent-evals/README.md); Langfuse |
+| **Monitoring sygnału** | Scheduled fetch + klasyfikacja | Ciągły ReAct na RSS | worker + epizod |
+| **Epizod hub (strategia)** | Planner TS + minimalny ReAct | Pełna automatyzacja bez kosztów | `tasks/sXXeYY/` |
+
+**Reguła kciuka:**
+
+```text
+Chcesz AI w codzienności (mail, kalendarz, KPI) → orchestrator + triggery poza createAgent; wąskie MCP per domena.
+Budujesz wiele agentów → izoluj obszary; łącz tylko gdy musisz (02_04_ops).
+System ma się sam oceniać → periodic worker + agent-evals — nie rozszerzaj agent.ts.
+Epizod hub (verify, mapa/strategia) → default boilerplate; logika planowania w kodzie epizodu.
+```
+
+**Odniesienia:** [research S04E03](../boilerplate/docs/specs/s04e03-contextual-collaboration/s04e03-contextual-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [agent-evals](../../agent-evals/README.md) · [research S03E01](../boilerplate/docs/specs/agent-observability-evals/agent-observability-evals.research.md) · [03_02_events](../../lessons/03_02_events/) · [03_03_calendar](../../lessons/03_03_calendar/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · transkrypt: `markdowns/s04e03-kontekstowa-wspolpraca-z-ai-1774999647.md`
 
 ---
 
