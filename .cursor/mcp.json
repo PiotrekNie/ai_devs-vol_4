@@ -1,22 +1,33 @@
 {
   "mcpServers": {
     "eversis-collections": {
-      "command": "/bin/bash",
+      "command": "node",
       "args": [
-        "scripts/mcp-run.sh",
-        "node",
-        "third-party/github-collections/mcp/eversis-collections-mcp/dist/index.js"
+        "${env:CURSOR_COLLECTIONS_HOME}/mcp/eversis-collections-mcp/dist/index.js"
       ],
-      "type": "stdio"
+      "type": "stdio",
+      "env": {
+        "CURSOR_COLLECTIONS_HOME": "${env:CURSOR_COLLECTIONS_HOME}"
+      }
     },
     "context7": {
       "type": "stdio",
       "command": "/bin/bash",
-      "args": ["scripts/mcp-run.sh", "npx", "-y", "@upstash/context7-mcp@latest"]
+      "args": [
+        "scripts/mcp-run.sh",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
     },
     "playwright": {
       "command": "/bin/bash",
-      "args": ["scripts/mcp-run.sh", "npx", "-y", "@playwright/mcp@latest"],
+      "args": [
+        "scripts/mcp-run.sh",
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
       "type": "stdio"
     },
     "sequential-thinking": {
@@ -39,8 +50,14 @@
     },
     "pdf-reader": {
       "command": "/bin/bash",
-      "args": ["scripts/mcp-run.sh", "npx", "-y", "@sylphx/pdf-reader-mcp"],
+      "args": [
+        "scripts/mcp-run.sh",
+        "npx",
+        "-y",
+        "@sylphx/pdf-reader-mcp"
+      ],
       "type": "stdio"
     }
-  }
+  },
+  "inputs": []
 }
