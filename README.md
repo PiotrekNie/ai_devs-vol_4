@@ -41,6 +41,7 @@ AGENTS.md      # entry point for Cursor agent workflow
 | `s03e03` | `reactor` — deterministic BFS planner, no LLM (S03E03) |
 | `s03e05` | `savethem` — hub tool discovery + hybrid route solver (S03E05) |
 | `s04e02` | `windpower` — async hub orchestrator, no LLM (S04E02) |
+| `s04e03` | `domatowo` — ReAct rescue mission agent, thin MCP, no solver (S04E03) |
 
 ## Clone (submodules)
 

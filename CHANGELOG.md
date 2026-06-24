@@ -6,6 +6,7 @@ All notable changes to this repository are documented here.
 
 ### Added
 
+- **`tasks/s04e03/`** — `@ai-devs/s04e03` domatowo agent: ReAct + 7 thin hub MCP tools, planning phase, memory hooks; mission solved by LLM (no TS solver).
 - **`tasks/s04e02/`** — `@ai-devs/s04e02` windpower orchestrator: parallel async hub polling, storm/production schedule, verify `windpower` (no LLM).
 - **`tasks/s03e05/`** — `@ai-devs/s03e05` savethem agent: hybrid ReAct (`hub_query` discovery) + deterministic `plan_route` BFS solver, hub verify `savethem`.
 - **`tasks/s03e03/`** — `@ai-devs/s03e03` reactor solver: deterministic BFS planner (no LLM), hub loop, fixture-calibrated block simulator.
