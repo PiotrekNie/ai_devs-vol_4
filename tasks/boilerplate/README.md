@@ -268,6 +268,7 @@ Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_di
 | [`lessons/03_04_gmail`](../../lessons/03_04_gmail/README.md) | Tool design reference + **Promptfoo** evals (per-tool & scenarios); mocked/live suites | Refining MCP contracts; **not** required for typical hub homework |
 | [`lessons/03_05_*`](../../lessons/03_05_awareness/README.md) | S03E05: awareness (`think`/`recall`) + generative UI demos (artifacts, render, MCP Apps) | Wide-space / non-deterministic agents; **not** default `@ai-devs/agent-boilerplate` |
 | [`lessons/04_01_garden`](../../lessons/04_01_garden/README.md) | S04E01: Digital Garden — Daytona sandbox, skills/workflows, static site publish | Production-style deployment demo; **not** `@ai-devs/agent-boilerplate` |
+| [`lessons/04_04_system`](../../lessons/04_04_system/README.md) | S04E04: markdown vault (Me/World/Craft/Ops/System), templates, `ops/` workflows, multi-agent | Full KB runtime; **not** `@ai-devs/agent-boilerplate` |
 | [`tasks/shared/`](../../shared/) | Course domain helpers (e.g. people fetch/filter) — not agent runtime | Import directly in episode code when needed |
 | [Code mode / sandbox](#code-mode--sandbox-not-in-boilerplate) | QuickJS or Deno guest execution + MCP bridges | Many MCP calls in one script; **lessons only** |
 
@@ -285,6 +286,7 @@ Built-in prompt templates: `src/prompts/system.md`, `planning_turn.md`, `tool_di
 | Production deployment / Digital Garden (terminal, git, publish) | [§2.5 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#25-production-deployments-s04e01) + lesson `04_01_garden` | Daytona, `git_push`, skills in boilerplate package |
 | Active collaboration / interface choice (CLI, MCP host, custom UI) | [§2.6 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#26-active-collaboration-with-ai-s04e02) | Chat UI, Slack bot, skills loader in boilerplate package |
 | Contextual work / background agents (calendar, mail, KPI, isolation) | [§2.7 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#27-contextual-collaboration-in-daily--business-workflows-s04e03) | Scheduler, SaaS integrations, subAgents API in boilerplate package |
+| Personal knowledge base / markdown vault (templates, ops/, navigation) | [§2.8 in boilerplate-documentation.md](../docs/boilerplate-documentation.md#28-personal-knowledge-base-for-ai-s04e04) + lesson `04_04_system` | `write_file`, `list_dir`, `delegate`, vault loader in boilerplate package |
 | Plan before acting | `enablePlanningPhase: true` | Duplicating plan in episode prompt |
 | Human input mid-run | `ask_human` in handlers | — |
 | Images / maps | `analyze_image_vision` | Pasting base64 into main model |

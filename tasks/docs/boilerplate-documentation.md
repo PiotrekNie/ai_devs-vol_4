@@ -241,7 +241,36 @@ System ma się sam oceniać → periodic worker + agent-evals — nie rozszerzaj
 Epizod hub (verify, mapa/strategia) → default boilerplate; logika planowania w kodzie epizodu.
 ```
 
-**Odniesienia:** [research S04E03](../boilerplate/docs/specs/s04e03-contextual-collaboration/s04e03-contextual-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [agent-evals](../../agent-evals/README.md) · [research S03E01](../boilerplate/docs/specs/agent-observability-evals/agent-observability-evals.research.md) · [03_02_events](../../lessons/03_02_events/) · [03_03_calendar](../../lessons/03_03_calendar/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · transkrypt: `markdowns/s04e03-kontekstowa-wspolpraca-z-ai-1774999647.md`
+**Odniesienia:** [research S04E03](../boilerplate/docs/specs/s04e03-contextual-collaboration/s04e03-contextual-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.8 Personal knowledge base (S04E04)](#28-personal-knowledge-base-for-ai-s04e04) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [agent-evals](../../agent-evals/README.md) · [research S03E01](../boilerplate/docs/specs/agent-observability-evals/agent-observability-evals.research.md) · [03_02_events](../../lessons/03_02_events/) · [03_03_calendar](../../lessons/03_03_calendar/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · transkrypt: `markdowns/s04e03-kontekstowa-wspolpraca-z-ai-1774999647.md`
+
+### 2.8. Personal knowledge base for AI (S04E04)
+
+Lekcja S04E04 uczy projektowania **własnej bazy wiedzy** (*vault* — trwały folder markdown) jako „kodu źródłowego” agenta poza repozytorium aplikacji: struktura Me / World / Craft / Ops / System, szablony, procesy w `ops/`, jakość notatek dla modelu oraz podział ról — człowiek = treść, AI = organizacja. To uzupełnienie [§2.5](#25-production-deployments-s04e01) (garden, vault wdrożeniowy) i [§2.7](#27-contextual-collaboration-in-daily--business-workflows-s04e03) (procesy w tle). Runtime boilerplate (`createAgent`, `read_file`, OM opt-in) **pozostaje bez zmian**; pełny vault, zapis plików, multi-agent i workflow w markdown to **lekcja [`04_04_system`](../../lessons/04_04_system/) lub aplikacja** poza pakietem.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Cel KB** | Jedna aktywność na start; iteracja | Pełna struktura „na dzień 1” | lekcja S04E04 |
+| **Układ katalogów** | Me / World / Craft / Ops / System (lub własny) | Jedna płaska lista notatek | [04_04_system](../../lessons/04_04_system/) |
+| **Format** | Markdown + frontmatter (ACL, tagi) | Binaria bez URL; lokalne obrazy bez planu | §2.8; [04_01_garden](../../lessons/04_01_garden/) |
+| **Treść notatki** | Samowystarczalna bez założonego kontekstu | „Ostatnia rozmowa” bez linku | `workspace/system/rules/` |
+| **Rola AI** | Organizacja, szablony, audyt | AI pisze merytorykę bez nadzoru | lekcja |
+| **Szablony** | `system/templates/` + MoC | Agent wymyśla strukturę za każdym razem | `04_04_system` |
+| **Procesy** | Pliki w `ops/` + delegacja faz | Jeden ReAct na cały pipeline | `ops/daily-news/` |
+| **Pamięć sesji** | OM opt-in przy długim ReAct | Mylenie OM z vault | [§4.3](#43-zarządzanie-pamięcią-srcagentmemoryts--observational_memory) |
+| **Odczyt plików (hub)** | `read_file` chunkowany | Wczytanie całego vault do kontekstu | boilerplate MCP |
+| **Zapis / listowanie** | MCP epizodu lub files MCP lekcji | `write_file` / `list_dir` w default pakiecie | [§2.5](#25-production-deployments-s04e01); [research S04E04 §4.1](../boilerplate/docs/specs/s04e04-knowledge-base/s04e04-knowledge-base.research.md) |
+| **Homework hub (`filesystem`)** | `http_request` + batch / TS | 15+ tur ReAct na plik | epizod hub |
+
+**Reguła kciuka:**
+
+```text
+Epizod hub (verify, krótka sesja, brak lokalnego vault) → default boilerplate.
+Trwała KB + szablony + ops/ + multi-agent → lessons/04_04_system lub aplikacja — nie createAgent.
+Długa sesja na wielu plikach → OM opt-in; vault pozostaje na dysku między triggerami (03_02_events).
+Zdalny FS / jednorazowa strukturyzacja danych (filesystem) → http_request + kod epizodu — nie moduł KB w pakiecie.
+```
+
+**Odniesienia:** [research S04E04](../boilerplate/docs/specs/s04e04-knowledge-base/s04e04-knowledge-base.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§4.3 Zarządzanie pamięcią](#43-zarządzanie-pamięcią-srcagentmemoryts--observational_memory) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [observational-memory research](../boilerplate/docs/specs/observational-memory/observational-memory.research.md) · [04_04_system](../../lessons/04_04_system/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · [03_02_events](../../lessons/03_02_events/) · transkrypt: `markdowns/s04e04-projektowanie-wlasnej-bazy-wiedzy-dla-ai-1775085192.md`
 
 ---
 
@@ -342,6 +371,8 @@ input        = ostatni surowy ogon konwersacji
 **Kalibracja tokenów:** Progi Observer liczone **raw** (`chars/4`). Rozmiar obserwacji i Reflector używają ratio z API `usage` po zebraniu próbek (`OM_CALIBRATION_MIN_ACTUAL_TOKENS`).
 
 **Persystencja:** Opcjonalna (`OM_PERSIST_DIR`) — pliki `observer-NNN.md`, `reflector-NNN.md` do debugu.
+
+**Observational Memory ≠ baza wiedzy (vault).** OM kompresuje **historię bieżącej sesji** ReAct do bloku `<observations>` w `instructions` — treść generują Observer i Reflector. **Baza wiedzy** (*vault*) to trwałe pliki markdown **między sesjami**: szablony, reguły, notatki, procesy w `ops/` — źródło prawdy poza kontekstem jednej rozmowy. OM i vault **mogą współistnieć** (długa sesja z wieloma `read_file` + vault na dysku między triggerami), ale **nie zastępują** się nawzajem. `OM_PERSIST_DIR` służy debugowi kompresji sesji — nie mylić z vault. Zapis, listowanie katalogów i multi-agent nad KB → [§2.8](#28-personal-knowledge-base-for-ai-s04e04); nie implementować vault w `memory.ts`.
 
 ### 4.4. Observability — Langfuse tracing (S03E01, opt-in)
 

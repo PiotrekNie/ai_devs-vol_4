@@ -2,6 +2,8 @@
 
 Multi-agent system where a markdown knowledge base drives agent behavior. Workflows, templates, rules, and agent identities are all vault notes — not code.
 
+**To nie jest `@ai-devs/agent-boilerplate`.** Referencyjna implementacja lekcji S04E04 (własna pętla agenta). Normatywna mapa decyzyjna: kiedy vault markdown vs profil hub ReAct — [§2.8 Personal knowledge base](../../../tasks/docs/boilerplate-documentation.md#28-personal-knowledge-base-for-ai-s04e04) w `boilerplate-documentation.md`.
+
 ## Run
 
 ```bash

@@ -18,6 +18,8 @@
 
 **Verdict: YES — Observational Memory can be implemented in `tasks/boilerplate`.**
 
+OM **nie zastępuje** markdownowej bazy wiedzy (*vault*, S04E04) — kompresuje historię **jednej sesji** ReAct, nie trwałe notatki między triggerami. Patrz [§2.8 Personal knowledge base](../../../../docs/boilerplate-documentation.md#28-personal-knowledge-base-for-ai-s04e04) oraz akapit w [§4.3 spec](../../../../docs/boilerplate-documentation.md#43-zarządzanie-pamięcią-srcagentmemoryts--observational_memory).
+
 The boilerplate was **explicitly designed** for this extension:
 
 - `createAgent` calls `memory.beforeTurn()` before every LLM call and `memory.afterTurn()` after tool results.
