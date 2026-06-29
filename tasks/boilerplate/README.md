@@ -214,6 +214,31 @@ Always active when you call `createAgent()` (unless noted).
 | `ModelResponse.usage` | Token usage from API when present | default | OM calibration, cost debugging | [Observational Memory](#observational-memory-s02e05) |
 | `ChatOptions` | e.g. `temperature`, `tracingMetadata` | opt-in | Per-call generation control / span metadata | `AgentConfig.chatOptions` |
 | `chat()` | Low-level API call outside the agent loop | default | Tests, OM Observer/Reflector passes | `src/agent/ai.ts` |
+| `chatStructured` | Single-shot **Structured Outputs** (json_schema + Zod); no tools | export | Classification, extraction, multi-step pipelines outside ReAct | `src/agent/structured.ts`, [§2.0 spec](../docs/boilerplate-documentation.md#20-llm-interaction-foundations-s01e01) |
+| `createStructuredAIAdapter` | Factory bound to model for repeated structured calls | export | Same as `chatStructured` with fixed model | `src/agent/structured.ts` |
+
+**Structured Outputs (outside ReAct):** use when you need typed JSON without function calling — e.g. batch classification. Not integrated with `createAgent`.
+
+```typescript
+import { z } from "zod";
+import { chatStructured } from "@ai-devs/agent-boilerplate";
+import { DEFAULT_AGENT_MODEL } from "@ai-devs/agent-boilerplate/config.js";
+
+const schema = z.object({
+  items: z.array(z.object({ id: z.number(), label: z.string() })),
+});
+
+const { data } = await chatStructured({
+  model: DEFAULT_AGENT_MODEL,
+  schemaName: "batch_labels",
+  schema,
+  temperature: 0,
+  instructions: "Return one item per numbered line in the user message.",
+  input: [{ role: "user", content: "1. foo\n2. bar" }],
+});
+```
+
+On Zod mismatch after parse, throws `StructuredOutputValidationError`. See [research §11](../boilerplate/docs/specs/s01e01-llm-interaction/s01e01-llm-interaction.research.md).
 
 ### Tools
 

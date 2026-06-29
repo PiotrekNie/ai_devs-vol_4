@@ -29,6 +29,23 @@ export {
 // AI adapter
 export { chat, createAIAdapter, fetchWithRetry } from "./src/agent/ai.js";
 export type { AIAdapter, ChatParams, ChatOptions } from "./src/agent/ai.js";
+export {
+  chatStructured,
+  createStructuredAIAdapter,
+  zodToOpenAiJsonSchema,
+  StructuredOutputError,
+  StructuredOutputApiError,
+  StructuredOutputParseError,
+  StructuredOutputValidationError,
+} from "./src/agent/structured.js";
+export type {
+  ChatStructuredParams,
+  ChatStructuredOptions,
+  ChatStructuredResult,
+  StructuredAIAdapter,
+  OpenAiJsonSchema,
+  StructuredOutputErrorCode,
+} from "./src/agent/structured.js";
 
 // Memory hooks
 export { noopMemoryHooks, estimateTokens } from "./src/agent/memory.js";

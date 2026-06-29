@@ -56,7 +56,8 @@ type OutputItem = {
   content?: Array<{ type?: string; text?: string }>;
 };
 
-function extractResponseText(data: unknown): string | null {
+/** Extracts JSON/text from Responses API body (output_text or message part). */
+export function extractResponseText(data: unknown): string | null {
   if (typeof data !== "object" || data === null) return null;
   const d = data as { output_text?: unknown; output?: OutputItem[] };
 
@@ -127,7 +128,8 @@ function compactOutputItems(output: unknown[] | undefined): unknown[] {
   });
 }
 
-function parseTokenUsage(data: Record<string, unknown>): ModelResponse["usage"] {
+/** Parses token usage from a Responses API JSON body. */
+export function parseTokenUsage(data: Record<string, unknown>): ModelResponse["usage"] {
   const usage = data["usage"];
   if (typeof usage !== "object" || usage === null) return undefined;
   const u = usage as Record<string, unknown>;

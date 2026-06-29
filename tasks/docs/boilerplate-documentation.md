@@ -18,6 +18,34 @@ Projekt opiera się na architekturze modułowej, w której agent jest oddzielony
 3. **Pamięć i Kompresja (Observer/Reflector):** Długoterminowe zarządzanie oknem kontekstowym dla wieloetapowych zadań, zapobiegające przekroczeniu limitu tokenów.
 4. **Odporność (Resilience):** Wbudowany mechanizm Exponential Backoff dla błędów sieciowych (np. celowe błędy HTTP 503 na serwerach kursowych).
 
+### 2.0. LLM interaction foundations (S01E01)
+
+Lekcja S01E01 wprowadza **programowanie interakcji z LLM przez API**: tokeny, autoregresja, bezstanowość, **sterowanie kontekstem w kodzie** oraz dwa równoległe mechanizmy — **Structured Outputs** (typed JSON jako odpowiedź) i **Function Calling** (narzędzia w pętli agenta). Pakiet `@ai-devs/agent-boilerplate` domyślnie realizuje **ReAct + function calling**; pipeline’y klasyfikacji / ekstrakcji bez narzędzi realizujesz przez **`chatStructured`** (opt-in export) lub kod epizodu.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Agent hub (ReAct)** | `createAgent` + MCP + `finish_task`, ≤5 tur | Structured Output zamiast narzędzi gdy zadanie wymaga I/O | [README](../boilerplate/README.md), [`agent.ts`](../boilerplate/src/agent/agent.ts) |
+| **Structured Outputs** | `chatStructured` + Zod; strict `json_schema` poza pętlą | Function calling do „zwróć JSON” bez akcji w otoczeniu | [`structured.ts`](../boilerplate/src/agent/structured.ts), [README — LLM adapter](../boilerplate/README.md#llm-adapter) |
+| **Sterowanie kontekstem** | Wieloetapowe wywołania w **kodzie epizodu** (classify → branch) | Jeden przepełniony prompt z całą logiką | orchestracja w `index.ts` epizodu |
+| **Prompty** | Pliki `src/prompts/*.md`, `readFileSync` | Długie stringi inline w TS | konwencja kursu |
+| **Opisy schematów** | `.describe()` w Zod (wartości pól) | Pola bez opisu w schema | [§2.3 Tool design (S03E04)](#23-tool-design--test-data-s03e04) |
+| **Multi-model** | `AGENT_MODEL`, `OM_MODEL`, osobne `createAIAdapter` / `chatStructured` | Jeden drogi model „everywhere” | [`config.ts`](../boilerplate/config.ts) |
+| **Batch / równoległość** | `Promise.all` + backoff w **epizodzie** | Wiele sekwencyjnych wywołań bez limitu | wzorzec lekcji `01_01_grounding` (upstream) |
+| **Checkpoint / cache** | Pliki JSON w warstwie epizodu | Stan pipeline w pamięci bez persystencji | epizod / lekcja |
+| **UI / streaming / events** | Warstwa aplikacji host | Semantic events w boilerplate | lekcje S04+, poza pakietem |
+| **Evals modeli** | `@ai-devs/agent-evals`, Promptfoo w lekcjach | Langfuse jako gate poprawności | [agent-evals](../agent-evals/README.md) |
+| **Homework hub** | `http_request` + `submit_to_hub` + retry 429/503 | ReAct gdy wystarczy deterministyczny skrypt | narzędzia MCP boilerplate |
+
+**Reguła kciuka:**
+
+```text
+Agent hub (ReAct, narzędzia) → default boilerplate (createAgent).
+Klasyfikacja / ekstrakcja JSON (bez narzędzi) → chatStructured lub kod epizodu.
+UI, streaming, multi-agent DB → aplikacja / lekcje — nie pakiet kursowy.
+```
+
+**Odniesienia:** [research S01E01](../boilerplate/docs/specs/s01e01-llm-interaction/s01e01-llm-interaction.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.3 Tool design (S03E04)](#23-tool-design--test-data-s03e04)
+
 ### 2.1. Project constraints (S03E02)
 
 Lekcja S03E02 uczy projektowania agentów **pod ograniczenia modeli** (koszt, latency, halucynacje, bezpieczeństwo). Boilerplate dostarcza runtime ReAct; **decyzje, co robi model, a co kod**, należy do autora epizodu. Poniższa tabela to szybka ściąga przy starcie nowego zadania w `tasks/sXXeYY/`.
