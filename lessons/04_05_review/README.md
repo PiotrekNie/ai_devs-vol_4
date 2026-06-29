@@ -2,6 +2,8 @@
 
 Markdown review lab. A document-centered UI with inline comment tooltips, powered by a review agent that anchors suggestions to exact text.
 
+**To nie jest `@ai-devs/agent-boilerplate`.** Referencyjna aplikacja lekcji S04E05 (orchestrator + HITL UI poza `createAgent`). Normatywna mapa decyzyjna: [§2.9 Internal solutions design](../../../tasks/docs/boilerplate-documentation.md#29-internal-solutions-design-s04e05) w `boilerplate-documentation.md`.
+
 ## Run
 
 ```bash

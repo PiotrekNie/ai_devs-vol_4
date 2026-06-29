@@ -31,6 +31,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **S04E02 (active collaboration)** — §2.6 in `tasks/docs/boilerplate-documentation.md` (interface channels CLI/MCP/messenger/custom, MCP host limits, meta-prompts pattern, multi-agent outside ReAct); §5.2.1 async orchestration note; README Quick decision row.
 - **S04E03 (contextual collaboration)** — §2.7 in `tasks/docs/boilerplate-documentation.md` (background AI, SaaS integration patterns, agent isolation, system self-observation); README Quick decision row; `agent-evals/README.md` system self-observation section.
 - **S04E04 (knowledge base)** — §2.8 in `tasks/docs/boilerplate-documentation.md` (vault markdown, Me/World/Craft/Ops/System, templates, ops workflows, OM vs KB); §4.3 paragraph Observational Memory ≠ knowledge base; README Quick decision + Related packages row for `04_04_system`; cross-link in observational-memory research; `lessons/04_04_system/README.md`.
+- **S04E05 (internal solutions)** — §2.9 in `tasks/docs/boilerplate-documentation.md` (enterprise adoption, light docs, review orchestrator + HITL, MCP Apps); cross-links in §2.4, §2.6, §2.8; README Quick decision + Related packages rows for `04_05_review` / `04_05_apps`; lesson README links.
 - **S01E01 (LLM interaction foundations)** — §2.0 in `tasks/docs/boilerplate-documentation.md` (ReAct vs Structured Outputs, context control, multi-model); README LLM adapter row for `chatStructured`.
 
 ### Changed

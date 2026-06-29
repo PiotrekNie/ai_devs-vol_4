@@ -176,7 +176,7 @@ Wiele lokalnych MCP po odkryciu API → toolDiscovery opt-in; HTTP toolsearch �
 }
 ```
 
-**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
+**Odniesienia:** [research S03E05](../boilerplate/docs/specs/s03e05-nondeterministic-models/s03e05-nondeterministic-models.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.9 Internal solutions design (S04E05)](#29-internal-solutions-design-s04e05) · [03_05_awareness](../../lessons/03_05_awareness/) · [03_05_artifacts](../../lessons/03_05_artifacts/) · [03_05_render](../../lessons/03_05_render/) · [03_05_apps](../../lessons/03_05_apps/) · [04_05_apps](../../lessons/04_05_apps/) (S04E05 — MCP Apps pod procesy biznesowe) · [tool-discovery research](../boilerplate/docs/specs/tool-discovery/tool-discovery.research.md)
 
 ### 2.5. Production deployments (S04E01)
 
@@ -240,7 +240,7 @@ Chcesz meta-prompt produktowy → osobny prompt/flow — nie moduł w @ai-devs/a
 Multi-agent / praca w tle → orchestrator poza pętlą ReAct (03_02_events) — nie agent.ts.
 ```
 
-**Odniesienia:** [research S04E02](../boilerplate/docs/specs/s04e02-active-collaboration/s04e02-active-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [03_02_events](../../lessons/03_02_events/) · [03_05_apps](../../lessons/03_05_apps/) · [04_01_garden](../../lessons/04_01_garden/) · transkrypt: `markdowns/s04e02-aktywna-wspolpraca-z-ai-1774908365.md`
+**Odniesienia:** [research S04E02](../boilerplate/docs/specs/s04e02-active-collaboration/s04e02-active-collaboration.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§2.9 Internal solutions design (S04E05)](#29-internal-solutions-design-s04e05) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [03_02_events](../../lessons/03_02_events/) · [03_05_apps](../../lessons/03_05_apps/) · [04_05_apps](../../lessons/04_05_apps/) · [04_01_garden](../../lessons/04_01_garden/) · transkrypt: `markdowns/s04e02-aktywna-wspolpraca-z-ai-1774908365.md`
 
 ### 2.7. Contextual collaboration in daily & business workflows (S04E03)
 
@@ -298,7 +298,37 @@ Długa sesja na wielu plikach → OM opt-in; vault pozostaje na dysku między tr
 Zdalny FS / jednorazowa strukturyzacja danych (filesystem) → http_request + kod epizodu — nie moduł KB w pakiecie.
 ```
 
-**Odniesienia:** [research S04E04](../boilerplate/docs/specs/s04e04-knowledge-base/s04e04-knowledge-base.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§4.3 Zarządzanie pamięcią](#43-zarządzanie-pamięcią-srcagentmemoryts--observational_memory) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [observational-memory research](../boilerplate/docs/specs/observational-memory/observational-memory.research.md) · [04_04_system](../../lessons/04_04_system/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · [03_02_events](../../lessons/03_02_events/) · transkrypt: `markdowns/s04e04-projektowanie-wlasnej-bazy-wiedzy-dla-ai-1775085192.md`
+**Odniesienia:** [research S04E04](../boilerplate/docs/specs/s04e04-knowledge-base/s04e04-knowledge-base.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.2 Contextual feedback (S03E03)](#22-contextual-feedback-s03e03) · [§2.3 Tool design & test data (S03E04)](#23-tool-design--test-data-s03e04) · [§2.5 Production deployments (S04E01)](#25-production-deployments-s04e01) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§2.9 Internal solutions design (S04E05)](#29-internal-solutions-design-s04e05) · [§4.3 Zarządzanie pamięcią](#43-zarządzanie-pamięcią-srcagentmemoryts--observational_memory) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [observational-memory research](../boilerplate/docs/specs/observational-memory/observational-memory.research.md) · [04_04_system](../../lessons/04_04_system/) · [04_01_garden](../../lessons/04_01_garden/) · [02_04_ops](../../lessons/02_04_ops/) · [03_02_events](../../lessons/03_02_events/) · transkrypt: `markdowns/s04e04-projektowanie-wlasnej-bazy-wiedzy-dla-ai-1775085192.md`
+
+### 2.9. Internal solutions design (S04E05)
+
+Lekcja S04E05 uczy projektowania **wewnątrzfirmowych** rozwiązań AI: od lekkich dokumentów (checklisty, onboarding, style) przez dedykowane narzędzia procesowe z **UI i człowiekiem w pętli** po **MCP Apps** łączące wiele usług. To uzupełnienie [§2.8](#28-personal-knowledge-base-for-ai-s04e04) (dokumenty jako wiedza) i [§2.6](#26-active-collaboration-with-ai-s04e02) (kanał dostarczenia). Runtime boilerplate (`createAgent`, `read_file`, `ask_human`) **pozostaje bez zmian**; chunking dokumentu, streaming, accept/reject i embedded UI to **lekcje [`04_05_review`](../../lessons/04_05_review/) / [`04_05_apps`](../../lessons/04_05_apps/) lub aplikacja** poza pakietem.
+
+| Obszar | Wzorzec (rób tak) | Antywzorzec (unikaj) | Gdzie w repo |
+| --- | --- | --- | --- |
+| **Adopcja** | Metryki, HITL, świadome ograniczenia modelu | Obietnica pełnej automatyzacji w core | lekcja S04E05; [§2.1](#21-project-constraints-s03e02) |
+| **Lekki ROI** | Checklista / styl / onboarding jako `.md` | Nowy moduł w `createAgent` na każdy dokument | `read_file`; [§2.8](#28-personal-knowledge-base-for-ai-s04e04) |
+| **Skills poza kodem** | Współdzielone instrukcje (Slack, eksport) | Jeden ogromny system prompt | `src/prompts/`; Cursor skills |
+| **Proces z UI** | Orchestrator + wiele `processQuery` + UI akceptacji | Jedna długa pętla ReAct na cały dokument | [04_05_review](../../lessons/04_05_review/) |
+| **Narzędzie procesowe** | Wąskie MCP (`add_comment`) | Model mutuje plik bez nadzoru | `04_05_review/src/tools.js` |
+| **Chunking dokumentu** | Kod hosta (AST / bloki) | Wklejenie całego pliku do kontekstu | `review-engine.js` |
+| **Bezpieczeństwo** | Uprawnienia w handlerze; brak nieodwracalnych tooli w core | „Zaufany Bedrock” = pełne zaufanie do modelu | [§2.1](#21-project-constraints-s03e02); lekcja |
+| **Wiele usług** | MCP Apps + deterministyczne akcje w UI | Jeden agent NL na cały CRM+Stripe+mail | [04_05_apps](../../lessons/04_05_apps/) |
+| **Zdalny MCP** | Serwer HTTP dla klientów (Claude.ai) | Monolit bez podziału host/MCP | `04_05_apps/mcp/` |
+| **Streaming postępu** | NDJSON / SSE w aplikacji | Wymaganie streamingu w `createAgent` | `review-engine.js` |
+| **Homework hub (`foodwarehouse`)** | `http_request` + SQLite w epizodzie; explore → plan → execute | ReAct zgadywający API magazynu | epizod `tasks/s04e05/` (planowany) |
+
+**Reguła kciuka:**
+
+```text
+Epizod hub (verify, krótka sesja) → default boilerplate.
+Checklista / onboarding / styl → markdown + read_file lub vault (§2.8) — nie nowe API.
+Recenzja dokumentów z accept/reject → lessons/04_05_review — orchestrator poza createAgent.
+Procesy stanowiskowe (wiele SaaS) → MCP Apps (04_05_apps) — host poza pakietem.
+Ryzyko nieodwracalne → człowiek w pętli + wąskie narzędzia — nie pełny dostęp API w MCP kursu.
+```
+
+**Odniesienia:** [research S04E05](../boilerplate/docs/specs/s04e05-internal-solutions-design/s04e05-internal-solutions-design.research.md) · [§2.1 Project constraints (S03E02)](#21-project-constraints-s03e02) · [§2.4 Non-deterministic models (S03E05)](#24-non-deterministic-models-as-advantage-s03e05) · [§2.6 Active collaboration (S04E02)](#26-active-collaboration-with-ai-s04e02) · [§2.7 Contextual collaboration (S04E03)](#27-contextual-collaboration-in-daily--business-workflows-s04e03) · [§2.8 Personal knowledge base (S04E04)](#28-personal-knowledge-base-for-ai-s04e04) · [§5.2.1 Code mode](#521-code-mode--wykonanie-kodu-poza-pakietem) · [04_05_review](../../lessons/04_05_review/) · [04_05_apps](../../lessons/04_05_apps/) · [03_05_apps](../../lessons/03_05_apps/) · transkrypt: `markdowns/s04e05-projektowanie-rozwiazan-wewnatrzfirmowych-1775189135.md`
 
 ---
 

@@ -2,6 +2,8 @@
 
 `04_05_apps` is a workflow-first MCP Apps example for the course.
 
+**This is not `@ai-devs/agent-boilerplate`.** S04E05 reference for remote MCP + MCP Apps (business workflows). Decision map: [§2.9 Internal solutions design](../../../tasks/docs/boilerplate-documentation.md#29-internal-solutions-design-s04e05) in `boilerplate-documentation.md`.
+
 It shows how to combine:
 
 - a browser chat host
